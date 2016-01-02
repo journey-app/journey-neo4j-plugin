@@ -51,9 +51,9 @@ public class ActionsTest extends ModelTestCase {
         requests.add(createRequestAttributes("s1", "a2", dateToMillis(2014, 12, 6)));
 
         actions.ignore(actions.findByActionLabel("a1"));
-        assertIterableEquals(list(action("a0"), action("a2")), actions.allExcludeIgnored());
+        assertSetEquals(list(action("a0"), action("a2")), actions.allExcludeIgnored());
         actions.unIgnore(action("a1"));
-        assertIterableEquals(list(action("a0"), action("a1"), action("a2")), actions.allExcludeIgnored());
+        assertSetEquals(list(action("a0"), action("a1"), action("a2")), actions.allExcludeIgnored());
     }
 
     @Test

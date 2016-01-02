@@ -46,14 +46,21 @@ public class ModelTestCase {
     protected Actions actions;
     private Transaction tx;
     protected Users users;
-    protected GraphDatabaseService db;
+    protected static GraphDatabaseService db;
     protected Application app;
     protected Application app2;
 
+
+    protected GraphDatabaseService createDB() {
+        // return new TestGraphDatabaseFactory().newEmbeddedDatabase("/tmp/journey-test");
+        return new TestGraphDatabaseFactory().newImpermanentDatabase();
+    }
+
     @Before
     public void supperSetUp() throws IOException {
-//        db = new TestGraphDatabaseFactory().newEmbeddedDatabase("/tmp/journey-test");
-        db = new TestGraphDatabaseFactory().newImpermanentDatabase();
+        if (db == null) {
+            db = createDB();
+        }
         app = new Application(db, TEST_NAME_SPACE);
         app2 = new Application(db, TEST_NAME_SPACE2);
 

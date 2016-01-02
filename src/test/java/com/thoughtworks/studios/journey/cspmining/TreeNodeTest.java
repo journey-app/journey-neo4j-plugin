@@ -23,14 +23,15 @@ import com.thoughtworks.studios.journey.models.RelTypes;
 import org.junit.Before;
 import org.junit.Test;
 import org.neo4j.graphdb.Node;
+import org.neo4j.helpers.collection.Iterables;
 
 import java.util.HashSet;
 
 import static com.thoughtworks.studios.journey.TestHelper.assertIterableEquals;
+import static com.thoughtworks.studios.journey.TestHelper.assertSetEquals;
 import static com.thoughtworks.studios.journey.utils.CollectionUtils.list;
 import static com.thoughtworks.studios.journey.utils.CollectionUtils.set;
 import static org.junit.Assert.*;
-import static org.neo4j.helpers.collection.Iterables.iterable;
 
 public class TreeNodeTest extends ModelTestCase {
 
@@ -78,7 +79,7 @@ public class TreeNodeTest extends ModelTestCase {
 
         treeNode.addChild(child1);
         treeNode.addChild(child2);
-        assertIterableEquals(iterable(child1, child2), treeNode.children());
+        assertSetEquals(Iterables.<TreeNode, TreeNode>iterable(child1, child2), treeNode.children());
 
         assertEquals(treeNode, child1.getParent());
         assertEquals(treeNode, child2.getParent());
@@ -88,6 +89,8 @@ public class TreeNodeTest extends ModelTestCase {
         assertFalse(child2.hasChildren());
         assertTrue(treeNode.hasChildren());
     }
+
+
 
     @Test
     public void testMaintainingDepthInfoOnBranchPushDown() {

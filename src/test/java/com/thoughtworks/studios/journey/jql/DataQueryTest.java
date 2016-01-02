@@ -27,6 +27,8 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.helpers.collection.Iterables;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
 
 import static com.thoughtworks.studios.journey.TestHelper.*;
 import static com.thoughtworks.studios.journey.utils.CollectionUtils.list;
@@ -178,7 +180,9 @@ public class DataQueryTest extends ModelTestCase {
         DataQuery query = new DataQuery(app);
         query.select("event.color |> flatten");
         query.stops(list("a1", "a1"));
-        assertEquals(list(list(t(v("blue")), t(v("brown")), t(v("yellow"))), list(t(v("red")), t(v()))), query.execute().data());
+        List<List<Tuple>> result = query.execute().data();
+        assertSetEquals(list(t(v("blue")), t(v("brown")), t(v("yellow"))), result.get(0));
+        assertSetEquals(list(t(v("red")), t(v())), result.get(1));
     }
 
     @Test
@@ -196,7 +200,9 @@ public class DataQueryTest extends ModelTestCase {
         DataQuery query = new DataQuery(app);
         query.select("event.color |> compact |> flatten");
         query.stops(list("a1", "a1"));
-        assertEquals(list(list(t(v("blue")), t(v("brown")), t(v("yellow"))), list(t(v("red")))), query.execute().data());
+        List<List<Tuple>> result = query.execute().data();
+        assertSetEquals(list(t(v("blue")), t(v("brown")), t(v("yellow"))), result.get(0));
+        assertSetEquals(list(t(v("red"))), result.get(1));
     }
 
     @Test

@@ -524,7 +524,7 @@ public class JourneyServiceTest {
         assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
         Response response = service.query("parsley", "event.timestamp |> to_date", "[]", "[\"*\"]", true);
         assertEquals(200, response.getStatus());
-        assertEquals(list(list(list("2011-12-11T19:00:00.000Z"))), extractDataFromQueryResult((String) response.getEntity()));
+        assertEquals(list(list(list("2011-12-11T11:00:00.000Z"))), extractDataFromQueryResult((String) response.getEntity()));
     }
 
     private Object extractDataFromQueryResult(String responseBody) throws IOException {

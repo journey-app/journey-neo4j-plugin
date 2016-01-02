@@ -48,6 +48,10 @@ public class TestHelper {
         assertEquals(toList(left), toList(right));
     }
 
+    public static  <T> void assertSetEquals(Iterable<T> expected, Iterable<T> actual) {
+        assertEquals(new HashSet<>(toList(expected)), new HashSet<>(toList(actual)));
+    }
+
     public static <T> void assertIteratorEquals(Iterator<T> expected, Iterator<T> actual) {
         assertEquals(IteratorUtil.asCollection(expected), IteratorUtil.asCollection(actual));
     }
@@ -124,7 +128,7 @@ public class TestHelper {
 
 
     public static long dateToMillis(int year, int month, int day, int hour) {
-        return new DateTime(year, month, day, hour, 0).getMillis();
+        return new DateTime(year, month, day, hour, 0, DateTimeZone.UTC).getMillis();
     }
 
     public static long dateToMillis(int year, int month, int day, int hour, int minutes) {

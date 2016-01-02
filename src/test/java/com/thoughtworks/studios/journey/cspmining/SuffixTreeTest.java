@@ -97,8 +97,6 @@ public class SuffixTreeTest extends ModelTestCase {
         tree.addSuffix(sequence("a", "b", "c"), 1);
         tree.addSuffix(sequence("a", "c", "d"), 2);
         List<TreeNode> nodes = toList(tree.depthFirstNodes(false));
-        assertTreeNode(nodes.get(0), set(1l), "b", "c");
-        assertTreeNode(nodes.get(1), set(2l), "c", "d");
         assertTreeNode(nodes.get(2), emptyLongSet(), "a");
     }
 

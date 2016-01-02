@@ -38,7 +38,7 @@ public class UsersTest extends ModelTestCase {
         Node req1 = requests.add(createRequestAttributes("s1", "a0", dateToMillis(2014, 7, 7, 10), "u1"));
         Node req2 = requests.add(createRequestAttributes("s1", "a1", dateToMillis(2014, 7, 7, 9), "u1"));
         Node req3 = requests.add(createRequestAttributes("s2", "a1", dateToMillis(2014, 7, 7, 11), "u2"));
-        assertIterableEquals(iterable("u1", "u2"), Iterables.map(pluckIdentifier(), users.findAll()));
+        assertSetEquals(Iterables.<String, String>iterable("u1", "u2"), Iterables.map(pluckIdentifier(), users.findAll()));
 
         assertEquals(users.findByIdentifier("u1"), journeys.user(requests.journeyOf(req1)));
         assertEquals(users.findByIdentifier("u1"), journeys.user(requests.journeyOf(req2)));
