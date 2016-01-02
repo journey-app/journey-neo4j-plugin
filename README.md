@@ -2,7 +2,7 @@
 
 **journye-neo4j-plugin** is a neo4j server extension provides out-of-box action path analysis features on top of the graph database. You can use it in areas such as realtime user tracking, convertion funnel analysis etc.
 
-This project is currently under active development. The released artificats is for you to trying out, not for production use yet.
+This project is currently under active development. The nightly build artificats is for trying out, not for production usage yet.
 
 ## Installation
 
