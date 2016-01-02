@@ -7,7 +7,7 @@ This project is currently under active development. The released artificats is f
 ## Installation
 
 * First you need have a neo4j server setup and running correctly. (Currently only support version 2.2.3).
-* Download the [latest nightly build](), move it into NEO4J_INSTALL_DIR/plugins.
+* Download the [latest nightly build](https://s3.amazonaws.com/cdn.journey-app.io/journey-neo4j-plugin/builds/journey-neo4j-plugin-1.0-nb-latest.jar), move it into NEO4J_INSTALL_DIR/plugins.
 * Add following line into NEO4j_INSTALL_DIR/config/neo4j-server.properties
 ```bash
 org.neo4j.server.thirdparty_jaxrs_classes=com.thoughtworks.studios.journey=/unmanaged
