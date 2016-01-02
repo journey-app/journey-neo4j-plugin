@@ -1,6 +1,6 @@
 # journey-neo4j-plugin
 
-journye-neo4j-plugin is a neo4j server extension provides out-of-box action path analysis features on top of the graph database. You can use it in areas such as realtime user tracking, convertion funnel analysis etc.
+**journye-neo4j-plugin** is a neo4j server extension provides out-of-box action path analysis features on top of the graph database. You can use it in areas such as realtime user tracking, convertion funnel analysis etc.
 
 ## License
 
