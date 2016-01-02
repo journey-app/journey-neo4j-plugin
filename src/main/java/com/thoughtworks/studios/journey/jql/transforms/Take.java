@@ -1,5 +1,5 @@
 /**
- * This file is part of journey-neo4j-plugin. journey-neo4j-plugin is a neo4j server extension that provids out-of-box action path analysis features on top of the graph database.
+ * This file is part of journey-neo4j-plugin. journey-neo4j-plugin is a neo4j server extension that provides out-of-box action path analysis features on top of the graph database.
  *
  * Copyright 2015 ThoughtWorks, Inc. and Pengchao Wang
  *
