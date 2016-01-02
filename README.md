@@ -1,18 +1,11 @@
 # journey-neo4j-plugin
 
+## License
 
-Dev Env Setup
--------------
-```
-> brew install maven
-> brew tap wpc/old-neo4j-versions
-> brew install neo4j-2.2.3
-> ./local_deploy
-```
+![GNU Public License version 3.0](http://www.gnu.org/graphics/gplv3-127x51.png)
+journey-neo4j-plugin is released under [GNU Public License version 3.0](http://www.gnu.org/licenses/gpl-3.0.txt)
 
-Dev tricks:
------------
-Tunnel to get access to neo4j console:
-```
-> ssh -v -i ~/.ssh/your-key ec2-user@[NEO-SERVER] -L 7475:localhost:7474 -N
-```
+
+## Copyright
+
+Copyright 2015 ThoughtWorks, Inc. and Pengchao Wang
