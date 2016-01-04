@@ -200,7 +200,7 @@ public class JourneyService {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{ns}/add_requests")
+    @Path("/{ns}/add_events")
     public Response addEvents(@PathParam("ns") String ns,
                               String eventsJSON) throws IOException {
 
@@ -273,7 +273,7 @@ public class JourneyService {
                              @QueryParam("limit") @DefaultValue("100") int limit,
                              @QueryParam("offset") @DefaultValue("0") int offset,
                              @QueryParam("desc") @DefaultValue("true") boolean descOrder,
-                             @QueryParam("requests_limit") @DefaultValue("50") int eventsLimit) throws IOException {
+                             @QueryParam("events_limit") @DefaultValue("50") int eventsLimit) throws IOException {
         Application app = new Application(graphDB, ns);
         List<Map> conditions = parseQueryCondition(queryJson);
         List<Map> result = new ArrayList<>();
@@ -437,8 +437,8 @@ public class JourneyService {
     @Path("/{ns}/journeys/{ids}")
     public Response journeyByIds(@PathParam("ns") String ns,
                                  @PathParam("ids") String ids,
-                                 @QueryParam("requests_limit") @DefaultValue("50") int eventsLimit,
-                                 @QueryParam("requests_offset") @DefaultValue("0") int eventsOffset) throws IOException {
+                                 @QueryParam("events_limit") @DefaultValue("50") int eventsLimit,
+                                 @QueryParam("events_offset") @DefaultValue("0") int eventsOffset) throws IOException {
         Application app = new Application(graphDB, ns);
 
         List<Map> result = new ArrayList<>();
