@@ -1,18 +1,18 @@
 /**
  * This file is part of journey-neo4j-plugin. journey-neo4j-plugin is a neo4j server extension that provides out-of-box action path analysis features on top of the graph database.
- *
+ * <p/>
  * Copyright 2015 ThoughtWorks, Inc. and Pengchao Wang
- *
+ * <p/>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p/>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p/>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -71,10 +71,16 @@ public class JourneyService {
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{ns}/setup_schema")
     public Response setupSchema(@PathParam("ns") String ns) {
-        Application app = new Application(graphDB, ns);
-        try (Transaction tx = graphDB.beginTx()) {
-            app.setupSchema();
-            tx.success();
+        Lock writingLock = getWritingLock(ns);
+        writingLock.lock();
+        try {
+            Application app = new Application(graphDB, ns);
+            try (Transaction tx = graphDB.beginTx()) {
+                app.setupSchema();
+                tx.success();
+            }
+        } finally {
+            writingLock.unlock();
         }
         return Response.status(Response.Status.OK).build();
     }
@@ -100,16 +106,22 @@ public class JourneyService {
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{ns}/import")
     public Response imports(@PathParam("ns") String ns, InputStream stream) throws IOException {
-        final Application app = new Application(graphDB, ns);
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream));
-        try (BatchTransaction tx = new BatchTransaction(graphDB, 1000)) {
-            DataImportExport importer = new DataImportExport(app, new Reporter() {
-                @Override
-                public void report() {
-                    tx.increment();
-                }
-            });
-            importer.importFrom(bufferedReader);
+        Lock writingLock = getWritingLock(ns);
+        writingLock.lock();
+        try {
+            final Application app = new Application(graphDB, ns);
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream));
+            try (BatchTransaction tx = new BatchTransaction(graphDB, 1000)) {
+                DataImportExport importer = new DataImportExport(app, new Reporter() {
+                    @Override
+                    public void report() {
+                        tx.increment();
+                    }
+                });
+                importer.importFrom(bufferedReader);
+            }
+        } finally {
+            writingLock.unlock();
         }
         return Response.status(Response.Status.OK).build();
     }
@@ -125,18 +137,24 @@ public class JourneyService {
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{ns}/destroy")
     public Response destroy(@PathParam("ns") String ns) {
-        Application app = new Application(graphDB, ns);
-        try (Transaction tx = graphDB.beginTx()) {
-            app.tearDownSchema();
-            tx.success();
-        }
+        Lock writingLock = getWritingLock(ns);
+        writingLock.lock();
+        try {
+            Application app = new Application(graphDB, ns);
+            try (Transaction tx = graphDB.beginTx()) {
+                app.tearDownSchema();
+                tx.success();
+            }
 
-        try (Transaction tx = graphDB.beginTx()) {
-            app.journeys().tearDownLegacyIndex();
-            tx.success();
-        }
+            try (Transaction tx = graphDB.beginTx()) {
+                app.journeys().tearDownLegacyIndex();
+                tx.success();
+            }
 
-        app.destroyData();
+            app.destroyData();
+        } finally {
+            writingLock.unlock();
+        }
 
         return Response.status(Response.Status.OK).build();
     }
@@ -146,27 +164,33 @@ public class JourneyService {
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{ns}/reindex")
     public Response reindex(@PathParam("ns") String ns) {
-        Application app = new Application(graphDB, ns);
-        try (Transaction tx = graphDB.beginTx()) {
-            app.journeys().tearDownLegacyIndex();
-            tx.success();
-        }
-
-        ArrayList<Long> ids = new ArrayList<>();
-        try (Transaction tx = graphDB.beginTx()) {
-            ResourceIterator<Node> journeys = graphDB.findNodes(app.journeys().getLabel());
-            while (journeys.hasNext()) {
-                ids.add(journeys.next().getId());
-            }
-            tx.success();
-        }
-
-        for (Long id : ids) {
+        Lock writingLock = getWritingLock(ns);
+        writingLock.lock();
+        try {
+            Application app = new Application(graphDB, ns);
             try (Transaction tx = graphDB.beginTx()) {
-                Node journey = graphDB.getNodeById(id);
-                app.journeys().reindex(journey);
+                app.journeys().tearDownLegacyIndex();
                 tx.success();
             }
+
+            ArrayList<Long> ids = new ArrayList<>();
+            try (Transaction tx = graphDB.beginTx()) {
+                ResourceIterator<Node> journeys = graphDB.findNodes(app.journeys().getLabel());
+                while (journeys.hasNext()) {
+                    ids.add(journeys.next().getId());
+                }
+                tx.success();
+            }
+
+            for (Long id : ids) {
+                try (Transaction tx = graphDB.beginTx()) {
+                    Node journey = graphDB.getNodeById(id);
+                    app.journeys().reindex(journey);
+                    tx.success();
+                }
+            }
+        } finally {
+            writingLock.unlock();
         }
 
         return Response.status(Response.Status.OK).build();
@@ -207,13 +231,13 @@ public class JourneyService {
                              @QueryParam("uid") String uid,
                              @QueryParam("anonymous_id") String anonymousId,
                              String traitsJSON) throws IOException {
-
-        Application app = new Application(graphDB, ns);
-        Users users = app.users();
-
         Lock writingLock = getWritingLock(ns);
         writingLock.lock();
+
         try {
+            Application app = new Application(graphDB, ns);
+            Users users = app.users();
+
             try (Transaction tx = graphDB.beginTx()) {
                 Node user = users.identify(uid, anonymousId);
                 if (traitsJSON != null) {
