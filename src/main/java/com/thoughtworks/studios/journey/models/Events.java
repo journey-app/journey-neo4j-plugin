@@ -147,7 +147,7 @@ public class Events implements Models {
     }
 
     public Label getLabel() {
-        return app.nameSpacedLabel("Request");
+        return app.nameSpacedLabel("Event");
     }
 
     public long count() {

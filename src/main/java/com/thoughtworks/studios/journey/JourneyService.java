@@ -28,14 +28,12 @@ import com.thoughtworks.studios.journey.models.*;
 import com.thoughtworks.studios.journey.utils.BatchTransaction;
 import com.thoughtworks.studios.journey.utils.JSONUtils;
 import org.apache.commons.lang.StringUtils;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
+import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -130,6 +128,30 @@ public class JourneyService {
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{ns}/migrate")
     public Response migrate(@PathParam("ns") String ns) {
+        Lock writingLock = getWritingLock(ns);
+        writingLock.lock();
+        try {
+            Application app = new Application(graphDB, ns);
+            Label requestLabel = app.nameSpacedLabel("Request");
+            ArrayList<Long> ids = new ArrayList<>();
+            try (Transaction ignored = graphDB.beginTx()) {
+                ResourceIterator<Node> nodes = graphDB.findNodes(requestLabel);
+                while (nodes.hasNext()) {
+                    Node node = nodes.next();
+                    ids.add(node.getId());
+                }
+            }
+
+            try (BatchTransaction tx = new BatchTransaction(graphDB, 5000)) {
+                for (Long id : ids) {
+                    Node node = graphDB.getNodeById(id);
+                    node.removeLabel(requestLabel);
+                    node.addLabel(app.events().getLabel());
+                }
+            }
+        } finally {
+            writingLock.unlock();
+        }
         return Response.status(Response.Status.OK).build();
     }
 

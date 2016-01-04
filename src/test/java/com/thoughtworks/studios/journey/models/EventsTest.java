@@ -141,7 +141,6 @@ public class EventsTest extends ModelTestCase {
         assertEquals(mapOf("k", set("v"), "k2", set("v2")), events.properties(event));
         assertEquals(set("v"), events.values(event, "k"));
         assertEquals(set("v2"), events.values(event, "k2"));
-
     }
 
     @Test
