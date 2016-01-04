@@ -151,8 +151,8 @@ public class ActionCorrelationCalculation {
     private Set<String> collectActions(Iterable<Node> journeys) {
         HashSet<String> result = new HashSet<>();
         for (Node journey : journeys) {
-            for (Node request : app.journeys().userRequests(journey)) {
-                result.add(app.requests().getActionLabel(request));
+            for (Node event : app.journeys().events(journey)) {
+                result.add(app.events().getActionLabel(event));
             }
         }
         return result;
@@ -180,8 +180,8 @@ public class ActionCorrelationCalculation {
     private Map<String, Integer> countActions(Node journey) {
         HashMap<String, Integer> result = new HashMap<>();
 
-        for (Node request : app.journeys().userRequests(journey)) {
-            String actionLabel = app.requests().getActionLabel(request);
+        for (Node event : app.journeys().events(journey)) {
+            String actionLabel = app.events().getActionLabel(event);
             incrementValue(result, actionLabel, 1);
         }
 

@@ -177,24 +177,24 @@ public class JourneyService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{ns}/add_requests")
-    public Response addRequests(@PathParam("ns") String ns,
-                                String requestsJson) throws IOException {
+    public Response addEvents(@PathParam("ns") String ns,
+                              String eventsJSON) throws IOException {
 
-        Lock requestWritingLock = getRequestWritingLock(ns);
-        requestWritingLock.lock();
+        Lock writingLock = getWritingLock(ns);
+        writingLock.lock();
         try {
             Application app = new Application(graphDB, ns);
 
-            List<Map> requestAttrs = jsonToListMap(requestsJson);
+            List<Map> eventsAttrs = jsonToListMap(eventsJSON);
             try (Transaction tx = graphDB.beginTx()) {
-                for (Map request : requestAttrs) {
+                for (Map eventAttrs : eventsAttrs) {
                     //noinspection unchecked
-                    app.requests().add(request);
+                    app.events().add(eventAttrs);
                 }
                 tx.success();
             }
         } finally {
-            requestWritingLock.unlock();
+            writingLock.unlock();
         }
         return Response.status(Response.Status.CREATED).build();
     }
@@ -211,8 +211,8 @@ public class JourneyService {
         Application app = new Application(graphDB, ns);
         Users users = app.users();
 
-        Lock requestWritingLock = getRequestWritingLock(ns);
-        requestWritingLock.lock();
+        Lock writingLock = getWritingLock(ns);
+        writingLock.lock();
         try {
             try (Transaction tx = graphDB.beginTx()) {
                 Node user = users.identify(uid, anonymousId);
@@ -225,16 +225,16 @@ public class JourneyService {
                 tx.success();
             }
         } finally {
-            requestWritingLock.unlock();
+            writingLock.unlock();
         }
         return Response.status(Response.Status.CREATED).build();
     }
 
-    private static ConcurrentHashMap<String, Lock> requestsWritingLocks = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, Lock> writingLocks = new ConcurrentHashMap<>();
 
-    private static Lock getRequestWritingLock(String ns) {
+    private static Lock getWritingLock(String ns) {
         Lock lock = new ReentrantLock();
-        Lock existingLock = requestsWritingLocks.putIfAbsent(ns, lock);
+        Lock existingLock = writingLocks.putIfAbsent(ns, lock);
         if (existingLock != null) {
             lock = existingLock;
         }
@@ -249,7 +249,7 @@ public class JourneyService {
                              @QueryParam("limit") @DefaultValue("100") int limit,
                              @QueryParam("offset") @DefaultValue("0") int offset,
                              @QueryParam("desc") @DefaultValue("true") boolean descOrder,
-                             @QueryParam("requests_limit") @DefaultValue("50") int requestsLimit) throws IOException {
+                             @QueryParam("requests_limit") @DefaultValue("50") int eventsLimit) throws IOException {
         Application app = new Application(graphDB, ns);
         List<Map> conditions = parseQueryCondition(queryJson);
         List<Map> result = new ArrayList<>();
@@ -263,7 +263,7 @@ public class JourneyService {
                     build();
 
             for (Node journey : query.journeys()) {
-                result.add(app.journeys().toHash(journey, requestsLimit, 0));
+                result.add(app.journeys().toHash(journey, eventsLimit, 0));
             }
         }
         return jsonOkResponse(result);
@@ -309,7 +309,7 @@ public class JourneyService {
                     conditions(conditions).
                     build();
             for (Node journey : query.journeys()) {
-                graph.add(app.journeys().userRequests(journey));
+                graph.add(app.journeys().events(journey));
             }
         }
         return jsonOkResponse(graph);
@@ -392,7 +392,7 @@ public class JourneyService {
                 }
 
                 Object userGroup = userGroups.iterator().next();
-                Iterator<Node> iterator = app.journeys().userRequestsCrossJourneys(journey);
+                Iterator<Node> iterator = app.journeys().eventsCrossJourney(journey);
 
                 StoppingCondition.StopMatchResult baseMatch = baseStop.match(iterator);
                 if (!baseMatch.matched()) {
@@ -413,14 +413,14 @@ public class JourneyService {
     @Path("/{ns}/journeys/{ids}")
     public Response journeyByIds(@PathParam("ns") String ns,
                                  @PathParam("ids") String ids,
-                                 @QueryParam("requests_limit") @DefaultValue("50") int requestsLimit,
-                                 @QueryParam("requests_offset") @DefaultValue("0") int requestsOffset) throws IOException {
+                                 @QueryParam("requests_limit") @DefaultValue("50") int eventsLimit,
+                                 @QueryParam("requests_offset") @DefaultValue("0") int eventsOffset) throws IOException {
         Application app = new Application(graphDB, ns);
 
         List<Map> result = new ArrayList<>();
         try (Transaction ignored = graphDB.beginTx()) {
             for (Node journey : app.journeys().findByIds(StringUtils.split(ids, ","))) {
-                result.add(app.journeys().toHash(journey, requestsLimit, requestsOffset));
+                result.add(app.journeys().toHash(journey, eventsLimit, eventsOffset));
             }
         }
         return jsonOkResponse(result);

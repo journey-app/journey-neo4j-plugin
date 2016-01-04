@@ -43,11 +43,10 @@ import static org.neo4j.server.rest.domain.JsonHelper.readJson;
 public class JourneyServiceTest {
 
     private JourneyService service;
-    private GraphDatabaseService db;
 
     @Before
     public void setup() throws IOException {
-        db = new TestGraphDatabaseFactory().newImpermanentDatabase();
+        GraphDatabaseService db = new TestGraphDatabaseFactory().newImpermanentDatabase();
         service = new JourneyService(db);
     }
 
@@ -69,14 +68,14 @@ public class JourneyServiceTest {
         service.setupSchema("parsley");
         service.setupSchema("acme");
 
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a0", 10L, "u1"),
-                createRequestAttributes("s0", "a1", 20L, "u1"),
-                createRequestAttributes("s1", "a1", 30L),
-                createRequestAttributes("s1", "a3", 40L, "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a0", 10L, "u1"),
+                createEventAttributes("s0", "a1", 20L, "u1"),
+                createEventAttributes("s1", "a1", 30L),
+                createEventAttributes("s1", "a3", 40L, "u2")
         ));
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
-        assertEquals(201, service.addRequests("acme", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
+        assertEquals(201, service.addEvents("acme", eventJson).getStatus());
 
         assertEquals(200, service.destroy("parsley").getStatus());
 
@@ -86,74 +85,74 @@ public class JourneyServiceTest {
     }
 
     @Test
-    public void canFetchJourneysAfterImportRequests() throws IOException {
+    public void canFetchJourneysAfterImportEvents() throws IOException {
         service.setupSchema("parsley");
 
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a0", 10L, "u1"),
-                createRequestAttributes("s0", "a1", 20L, "u1"),
-                createRequestAttributes("s1", "a1", 30L, (String) null),
-                createRequestAttributes("s1", "a3", 40L, "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a0", 10L, "u1"),
+                createEventAttributes("s0", "a1", 20L, "u1"),
+                createEventAttributes("s1", "a1", 30L, (String) null),
+                createEventAttributes("s1", "a3", 40L, "u2")
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         Response response = service.journeys("parsley", "", -1, 0, true, 101);
         assertEquals(200, response.getStatus());
         List<Map> journeys = jsonToListMap((String) response.getEntity());
         assertEquals(2, count(journeys));
-        Iterable<Map> requests0 = (Iterable<Map>) journeys.get(0).get("requests");
-        assertIterableEquals(iterable("/url/a1", "/url/a3"), map(pluck("url"), requests0));
-        assertIterableEquals(iterable("a1", "a3"), map(pluck("action_label"), requests0));
+        Iterable<Map> events0 = (Iterable<Map>) journeys.get(0).get("events");
+        assertIterableEquals(iterable("/url/a1", "/url/a3"), map(pluck("url"), events0));
+        assertIterableEquals(iterable("a1", "a3"), map(pluck("action_label"), events0));
         assertEquals("u2", ((Map) journeys.get(0).get("user")).get("uid"));
 
-        Iterable<Map> requests1 = (Iterable<Map>) journeys.get(1).get("requests");
-        assertIterableEquals(iterable("/url/a0", "/url/a1"), map(pluck("url"), requests1));
-        assertIterableEquals(iterable("a0", "a1"), map(pluck("action_label"), requests1));
+        Iterable<Map> events1 = (Iterable<Map>) journeys.get(1).get("events");
+        assertIterableEquals(iterable("/url/a0", "/url/a1"), map(pluck("url"), events1));
+        assertIterableEquals(iterable("a0", "a1"), map(pluck("action_label"), events1));
         assertEquals("u1", ((Map) journeys.get(1).get("user")).get("uid"));
     }
 
 
     @Test
-    public void importRequestsWithOptionalFields() throws IOException {
+    public void importEventsWithOptionalFields() throws IOException {
         service.setupSchema("parsley");
 
-        String requestJson = toJson(iterable(
-                merge(createRequestAttributes("s0", "a0", 10L, "u1"),
+        String eventJson = toJson(iterable(
+                merge(createEventAttributes("s0", "a0", 10L, "u1"),
                         mapOf("client_ip", (Object) "10.3.3.3",
                                 "status_code", "302"))
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         Response response = service.journeys("parsley", "", -1, 0, true, 101);
         assertEquals(200, response.getStatus());
         List<Map> journeys = jsonToListMap((String) response.getEntity());
         assertEquals(1, count(journeys));
-        Iterable<Map> requests0 = (Iterable<Map>) journeys.get(0).get("requests");
-        assertIterableEquals(iterable("10.3.3.3"), map(pluck("client_ip"), requests0));
-        assertIterableEquals(iterable(302), map(pluck("status_code"), requests0));
+        Iterable<Map> events0 = (Iterable<Map>) journeys.get(0).get("events");
+        assertIterableEquals(iterable("10.3.3.3"), map(pluck("client_ip"), events0));
+        assertIterableEquals(iterable(302), map(pluck("status_code"), events0));
     }
 
     @Test
     public void fetchJourneyWithJsonQuery() throws IOException {
         service.setupSchema("parsley");
 
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a0", 10L, "u1"),
-                createRequestAttributes("s0", "a1", 20L, "u1"),
-                createRequestAttributes("s1", "a1", 30L),
-                createRequestAttributes("s1", "a1", 30L),
-                createRequestAttributes("s1", "a3", 40L, "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a0", 10L, "u1"),
+                createEventAttributes("s0", "a1", 20L, "u1"),
+                createEventAttributes("s1", "a1", 30L),
+                createEventAttributes("s1", "a1", 30L),
+                createEventAttributes("s1", "a3", 40L, "u2")
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         String queryJson = "[{\"subject\":\"User\",\"verb\":\"name is\",\"object\":\"u1\"}]";
         Response response = service.journeys("parsley", queryJson, -1, 0, true, 101);
         assertEquals(200, response.getStatus());
         List<Map> journeys = jsonToListMap((String) response.getEntity());
         assertEquals(1, count(journeys));
-        Iterable<Map> requests0 = (Iterable<Map>) journeys.get(0).get("requests");
-        assertIterableEquals(iterable("/url/a0", "/url/a1"), map(pluck("url"), requests0));
-        assertIterableEquals(iterable("a0", "a1"), map(pluck("action_label"), requests0));
+        Iterable<Map> events0 = (Iterable<Map>) journeys.get(0).get("events");
+        assertIterableEquals(iterable("/url/a0", "/url/a1"), map(pluck("url"), events0));
+        assertIterableEquals(iterable("a0", "a1"), map(pluck("action_label"), events0));
         assertEquals("u1", ((Map) journeys.get(0).get("user")).get("uid"));
     }
 
@@ -161,14 +160,14 @@ public class JourneyServiceTest {
     public void reindexJourneys() throws IOException {
         service.setupSchema("parsley");
 
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a0", 10L, "u1"),
-                createRequestAttributes("s0", "a1", 20L, "u1"),
-                createRequestAttributes("s1", "a1", 30L),
-                createRequestAttributes("s1", "a3", 40L, "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a0", 10L, "u1"),
+                createEventAttributes("s0", "a1", 20L, "u1"),
+                createEventAttributes("s1", "a1", 30L),
+                createEventAttributes("s1", "a3", 40L, "u2")
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         assertEquals(200, service.reindex("parsley").getStatus());
 
         String queryJson = "[{\"subject\":\"User\",\"verb\":\"name is\",\"object\":\"u*\"}]";
@@ -182,14 +181,14 @@ public class JourneyServiceTest {
     public void fetchJourneysSummary() throws IOException, JsonParseException {
         service.setupSchema("parsley");
 
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a0", 10L, "u1"),
-                createRequestAttributes("s0", "a1", 20L, "u1"),
-                createRequestAttributes("s1", "a1", 30L),
-                createRequestAttributes("s1", "a3", 40L, "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a0", 10L, "u1"),
+                createEventAttributes("s0", "a1", 20L, "u1"),
+                createEventAttributes("s1", "a1", 30L),
+                createEventAttributes("s1", "a3", 40L, "u2")
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         String queryJson = "[{\"subject\":\"User\",\"verb\":\"name is\",\"object\":\"u1\"}]";
         Response response = service.journeysSummary("parsley", queryJson);
         assertEquals(200, response.getStatus());
@@ -202,14 +201,14 @@ public class JourneyServiceTest {
     public void fetchJourneysActionGraph() throws IOException, JsonParseException {
         service.setupSchema("parsley");
 
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a0", 10L, "u1"),
-                createRequestAttributes("s0", "a1", 20L, "u1"),
-                createRequestAttributes("s1", "a1", 30L),
-                createRequestAttributes("s1", "a3", 40L, "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a0", 10L, "u1"),
+                createEventAttributes("s0", "a1", 20L, "u1"),
+                createEventAttributes("s1", "a1", 30L),
+                createEventAttributes("s1", "a3", 40L, "u2")
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         String queryJson = "[{\"subject\":\"User\",\"verb\":\"name is\",\"object\":\"u1\"}]";
         Response response = service.journeysActionGraph("parsley", queryJson, 10);
         assertEquals(200, response.getStatus());
@@ -227,26 +226,26 @@ public class JourneyServiceTest {
     @Test
     public void testFrequentPathMining() throws IOException, JsonParseException {
         service.setupSchema("parsley");
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1"),
-                createRequestAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s0", "f", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s0", "g", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s0", "c", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s1", "a", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "d", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "b", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "g", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s2", "d", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "f", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "g", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1"),
+                createEventAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s0", "f", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s0", "g", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s0", "c", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s1", "a", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "d", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "b", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "g", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s2", "d", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "f", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "g", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
 
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         assertEquals(201, service.buildSuffixTrees("parsley", 3, 100).getStatus());
 
 
@@ -278,31 +277,31 @@ public class JourneyServiceTest {
     @Test
     public void testChurnPOSTAction() throws IOException, JsonParseException {
         service.setupSchema("parsley");
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1"),
-                createRequestAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1", "POST"),
-                createRequestAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1", "POST"),
-                createRequestAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1", "POST"),
-                createRequestAttributes("s0", "g", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s0", "c", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s1", "a", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "d", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "b", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "e", dateToMillis(2011, 12, 12, 5), "u1", "POST"),
-                createRequestAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "g", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s2", "d", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", "POST"),
-                createRequestAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", "POST"),
-                createRequestAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", "POST"),
-                createRequestAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", "POST"),
-                createRequestAttributes("s2", "f", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "g", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1"),
+                createEventAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1", "POST"),
+                createEventAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1", "POST"),
+                createEventAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1", "POST"),
+                createEventAttributes("s0", "g", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s0", "c", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s1", "a", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "d", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "b", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "e", dateToMillis(2011, 12, 12, 5), "u1", "POST"),
+                createEventAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "g", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s2", "d", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", "POST"),
+                createEventAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", "POST"),
+                createEventAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", "POST"),
+                createEventAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", "POST"),
+                createEventAttributes("s2", "f", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "g", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
         ));
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         assertEquals(201, service.buildSuffixTrees("parsley", 3, 100).getStatus());
 
 
@@ -323,15 +322,15 @@ public class JourneyServiceTest {
     public void testActionLabels() throws IOException, JsonParseException {
         service.setupSchema("parsley");
 
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a1", dateToMillis(2014, 12, 11, 11), "u1"),
-                createRequestAttributes("s0", "a0", dateToMillis(2014, 12, 12, 11), "u1"),
-                createRequestAttributes("s1", "a1", dateToMillis(2014, 12, 12, 5)),
-                createRequestAttributes("s1", "a3", dateToMillis(2014, 12, 13, 5), "u2"),
-                createRequestAttributes("s1", "a3", dateToMillis(2014, 12, 14, 5), "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a1", dateToMillis(2014, 12, 11, 11), "u1"),
+                createEventAttributes("s0", "a0", dateToMillis(2014, 12, 12, 11), "u1"),
+                createEventAttributes("s1", "a1", dateToMillis(2014, 12, 12, 5)),
+                createEventAttributes("s1", "a3", dateToMillis(2014, 12, 13, 5), "u2"),
+                createEventAttributes("s1", "a3", dateToMillis(2014, 12, 14, 5), "u2")
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
 
         Response response = service.actionLabels("parsley");
         assertEquals(200, response.getStatus());
@@ -344,15 +343,15 @@ public class JourneyServiceTest {
     public void testActionLabelsExcludeIgnoredActions() throws IOException, JsonParseException {
         service.setupSchema("parsley");
 
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a0", dateToMillis(2014, 12, 11, 11), "u1"),
-                createRequestAttributes("s0", "a1", dateToMillis(2014, 12, 12, 11), "u1"),
-                createRequestAttributes("s1", "a1", dateToMillis(2014, 12, 12, 5)),
-                createRequestAttributes("s1", "a3", dateToMillis(2014, 12, 13, 5), "u2"),
-                createRequestAttributes("s1", "a3", dateToMillis(2014, 12, 14, 5), "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a0", dateToMillis(2014, 12, 11, 11), "u1"),
+                createEventAttributes("s0", "a1", dateToMillis(2014, 12, 12, 11), "u1"),
+                createEventAttributes("s1", "a1", dateToMillis(2014, 12, 12, 5)),
+                createEventAttributes("s1", "a3", dateToMillis(2014, 12, 13, 5), "u2"),
+                createEventAttributes("s1", "a3", dateToMillis(2014, 12, 14, 5), "u2")
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         assertEquals(200, service.ignoreAction("parsley", "a1", true).getStatus());
 
         Response response = service.actionLabels("parsley");
@@ -365,15 +364,15 @@ public class JourneyServiceTest {
     public void testFetchAllIgnoredActions() throws IOException, JsonParseException {
         service.setupSchema("parsley");
 
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a0", dateToMillis(2014, 12, 11, 11), "u1"),
-                createRequestAttributes("s0", "a1", dateToMillis(2014, 12, 12, 11), "u1"),
-                createRequestAttributes("s1", "a1", dateToMillis(2014, 12, 12, 5)),
-                createRequestAttributes("s1", "a3", dateToMillis(2014, 12, 13, 5), "u2"),
-                createRequestAttributes("s1", "a3", dateToMillis(2014, 12, 14, 5), "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a0", dateToMillis(2014, 12, 11, 11), "u1"),
+                createEventAttributes("s0", "a1", dateToMillis(2014, 12, 12, 11), "u1"),
+                createEventAttributes("s1", "a1", dateToMillis(2014, 12, 12, 5)),
+                createEventAttributes("s1", "a3", dateToMillis(2014, 12, 13, 5), "u2"),
+                createEventAttributes("s1", "a3", dateToMillis(2014, 12, 14, 5), "u2")
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         assertEquals(200, service.ignoreAction("parsley", "a1", true).getStatus());
         assertEquals(200, service.ignoreAction("parsley", "a3", true).getStatus());
 
@@ -391,18 +390,18 @@ public class JourneyServiceTest {
     }
 
     @Test
-    public void testFetchRequestCountForAnActionForPeriodOfTime() throws IOException, JsonParseException {
+    public void testFetchEventCountForAnActionForPeriodOfTime() throws IOException, JsonParseException {
         service.setupSchema("parsley");
 
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a0", dateToMillis(2014, 12, 11, 11), "u1"),
-                createRequestAttributes("s0", "a1", dateToMillis(2014, 12, 12, 11), "u1"),
-                createRequestAttributes("s1", "a1", dateToMillis(2014, 12, 12, 5)),
-                createRequestAttributes("s1", "a3", dateToMillis(2014, 12, 13, 5), "u2"),
-                createRequestAttributes("s1", "a3", dateToMillis(2014, 12, 14, 5), "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a0", dateToMillis(2014, 12, 11, 11), "u1"),
+                createEventAttributes("s0", "a1", dateToMillis(2014, 12, 12, 11), "u1"),
+                createEventAttributes("s1", "a1", dateToMillis(2014, 12, 12, 5)),
+                createEventAttributes("s1", "a3", dateToMillis(2014, 12, 13, 5), "u2"),
+                createEventAttributes("s1", "a3", dateToMillis(2014, 12, 14, 5), "u2")
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
 
         Response response = service.query("parsley", "event.timestamp |> time_floor:day |> to_date |> group_count", "[]", "[\"a1\"]", false);
         assertEquals(200, response.getStatus());
@@ -414,14 +413,14 @@ public class JourneyServiceTest {
     public void testLoadJourneysById() throws IOException {
         service.setupSchema("parsley");
 
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a0", 10L, "u1"),
-                createRequestAttributes("s0", "a1", 20L, "u1"),
-                createRequestAttributes("s1", "a1", 30L),
-                createRequestAttributes("s1", "a3", 40L, "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a0", 10L, "u1"),
+                createEventAttributes("s0", "a1", 20L, "u1"),
+                createEventAttributes("s1", "a1", 30L),
+                createEventAttributes("s1", "a3", 40L, "u2")
         ));
 
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
 
         List<Map> journeyList = jsonToListMap((String) service.journeys("parsley", "", -1, 0, true, 101).getEntity());
         int j1Id = (int) journeyList.get(0).get("id");
@@ -429,33 +428,33 @@ public class JourneyServiceTest {
 
         Response response = service.journeyByIds("parsley", String.valueOf(j1Id), 1, 1);
         List<Map> js = jsonToListMap((String) response.getEntity());
-        Iterable<Map> requests0 = (Iterable<Map>) js.get(0).get("requests");
-        assertIterableEquals(iterable("/url/a3"), map(pluck("url"), requests0));
-        assertIterableEquals(iterable("a3"), map(pluck("action_label"), requests0));
+        Iterable<Map> events0 = (Iterable<Map>) js.get(0).get("events");
+        assertIterableEquals(iterable("/url/a3"), map(pluck("url"), events0));
+        assertIterableEquals(iterable("a3"), map(pluck("action_label"), events0));
         assertEquals("u2", ((Map) journeyList.get(0).get("user")).get("uid"));
     }
 
     @Test
     public void testQueryFunnelData() throws IOException {
         service.setupSchema("parsley");
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1"),
-                createRequestAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s0", "f", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s0", "g", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s0", "c", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s1", "a", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "d", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "b", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "g", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s2", "d", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "f", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "g", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1"),
+                createEventAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s0", "f", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s0", "g", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s0", "c", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s1", "a", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "d", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "b", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "g", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s2", "d", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "f", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "g", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
         ));
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         Response response = service.query("parsley", "user |> distinct |> count", "[]", "[\"a\", \"d\"]", true);
         assertEquals(200, response.getStatus());
         assertEquals(list(list(list(1)), list(list(1))), extractDataFromQueryResult((String) response.getEntity()));
@@ -464,24 +463,24 @@ public class JourneyServiceTest {
     @Test
     public void testSegmentationData() throws IOException {
         service.setupSchema("parsley");
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1"),
-                createRequestAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1", mapOf("color", "red")),
-                createRequestAttributes("s0", "f", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s0", "g", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s0", "c", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s1", "a", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "d", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "b", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "g", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s2", "d", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", mapOf("color", "green")),
-                createRequestAttributes("s2", "f", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "g", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1"),
+                createEventAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1", mapOf("color", "red")),
+                createEventAttributes("s0", "f", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s0", "g", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s0", "c", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s1", "a", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "d", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "b", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "g", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s2", "d", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", mapOf("color", "green")),
+                createEventAttributes("s2", "f", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "g", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
         ));
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         Response response = service.query("parsley", "event.color |> group_count", "[]", "[\"e\"]", true);
         assertEquals(200, response.getStatus());
         assertEquals(list(list(list("red", 1),
@@ -491,24 +490,24 @@ public class JourneyServiceTest {
     @Test
     public void testSelectUser() throws IOException {
         service.setupSchema("parsley");
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1"),
-                createRequestAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1", mapOf("color", "red")),
-                createRequestAttributes("s0", "f", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s0", "g", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s0", "c", dateToMillis(2011, 12, 12, 11), "u1"),
-                createRequestAttributes("s1", "a", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "d", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "b", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s1", "g", dateToMillis(2011, 12, 12, 5), "u1"),
-                createRequestAttributes("s2", "d", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", mapOf("color", "green")),
-                createRequestAttributes("s2", "f", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "g", dateToMillis(2011, 12, 13, 5), "u2"),
-                createRequestAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1"),
+                createEventAttributes("s0", "e", dateToMillis(2011, 12, 12, 11), "u1", mapOf("color", "red")),
+                createEventAttributes("s0", "f", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s0", "g", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s0", "c", dateToMillis(2011, 12, 12, 11), "u1"),
+                createEventAttributes("s1", "a", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "d", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "b", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "f", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s1", "g", dateToMillis(2011, 12, 12, 5), "u1"),
+                createEventAttributes("s2", "d", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "e", dateToMillis(2011, 12, 13, 5), "u2", mapOf("color", "green")),
+                createEventAttributes("s2", "f", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "g", dateToMillis(2011, 12, 13, 5), "u2"),
+                createEventAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
         ));
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         Response response = service.query("parsley", "user", "[]", "[\"e\"]", true);
         assertEquals(200, response.getStatus());
         assertEquals(list(list(list(mapOf("uid", "u1", "traits", mapOf(), "anonymous_id", null)),
@@ -518,10 +517,10 @@ public class JourneyServiceTest {
     @Test
     public void testSelectDate() throws IOException {
         service.setupSchema("parsley");
-        String requestJson = toJson(iterable(
-                createRequestAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1")
+        String eventJson = toJson(iterable(
+                createEventAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1")
         ));
-        assertEquals(201, service.addRequests("parsley", requestJson).getStatus());
+        assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         Response response = service.query("parsley", "event.timestamp |> to_date", "[]", "[\"*\"]", true);
         assertEquals(200, response.getStatus());
         assertEquals(list(list(list("2011-12-11T11:00:00.000Z"))), extractDataFromQueryResult((String) response.getEntity()));

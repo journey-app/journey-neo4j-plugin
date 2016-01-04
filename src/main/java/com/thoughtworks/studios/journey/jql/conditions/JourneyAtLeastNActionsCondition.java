@@ -38,8 +38,8 @@ public class JourneyAtLeastNActionsCondition extends QueryCondition {
         return Iterables.filter(new Predicate<Node>() {
             @Override
             public boolean accept(Node node) {
-                Iterable<Node> requests = app.journeys().userRequests(node);
-                Iterator<Node> iterator = requests.iterator();
+                Iterable<Node> events = app.journeys().events(node);
+                Iterator<Node> iterator = events.iterator();
                 for (int i = 0; i < n; i++) {
                     if (iterator.hasNext()) {
                         iterator.next();

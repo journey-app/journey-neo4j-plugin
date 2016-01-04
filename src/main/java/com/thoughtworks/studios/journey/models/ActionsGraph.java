@@ -40,13 +40,13 @@ public class ActionsGraph {
         findOrCreateNode("$start", 0);
     }
 
-    public void add(Iterable<Node> requests) {
-        Iterable<Node> limited = limit(stepLimit, requests);
+    public void add(Iterable<Node> events) {
+        Iterable<Node> limited = limit(stepLimit, events);
         int step = 0;
         GraphNode previous = findOrCreateNode("$start", step);
-        for (Node request : limited) {
+        for (Node event : limited) {
             step ++;
-            String actionLabel = app.requests().getActionLabel(request);
+            String actionLabel = app.events().getActionLabel(event);
             GraphNode current = findOrCreateNode(actionLabel, step);
             if (previous != null) {
                 Link link = findOrCreateLink(previous, current);

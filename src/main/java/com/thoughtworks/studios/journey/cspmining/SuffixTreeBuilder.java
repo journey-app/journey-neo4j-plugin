@@ -57,8 +57,8 @@ public class SuffixTreeBuilder {
             long journeyId = journeyIds.getLong(i);
             try (Transaction tx = app.graphDB().beginTx()) {
                 Node journey = app.graphDB().getNodeById(journeyId);
-                for (Node request : app.journeys().userRequests(journey)) {
-                    String actionLabel = app.requests().getActionLabel(request);
+                for (Node event : app.journeys().events(journey)) {
+                    String actionLabel = app.events().getActionLabel(event);
 
                     if (!forest.containsKey(actionLabel)) {
                         SuffixTree tree = new SuffixTree(app, actionLabel, journeyIds.size());
@@ -68,7 +68,7 @@ public class SuffixTreeBuilder {
                     }
 
                     SuffixTree tree = forest.get(actionLabel);
-                    List<Node> suffix = toList(limit(treeHeightLimit, app.journeys().suffixFor(request)));
+                    List<Node> suffix = toList(limit(treeHeightLimit, app.journeys().suffixFor(event)));
 
                     if (!hasOverlap(lastAddedSuffixes.get(actionLabel), suffix)) {
                         tree.addSuffix(getNames(suffix), journeyId);
@@ -89,18 +89,18 @@ public class SuffixTreeBuilder {
             return false;
         }
 
-        for (Node request : sequence) {
-            if (lastAdded.contains(request)) {
+        for (Node event : sequence) {
+            if (lastAdded.contains(event)) {
                 return true;
             }
         }
         return false;
     }
 
-    private List<String> getNames(Iterable<Node> requests) {
+    private List<String> getNames(Iterable<Node> events) {
         ArrayList<String> names = new ArrayList<>(treeHeightLimit);
-        for (Node request : requests) {
-            names.add(app.requests().getActionLabel(request));
+        for (Node event : events) {
+            names.add(app.events().getActionLabel(event));
         }
         return names;
     }
@@ -112,8 +112,8 @@ public class SuffixTreeBuilder {
                 long journeyId = journeyIds.getLong(i);
                 Node journey = app.graphDB().getNodeById(journeyId);
 
-                for (Node request : app.journeys().userRequests(journey)) {
-                    String actionLabel = app.requests().getActionLabel(request);
+                for (Node event : app.journeys().events(journey)) {
+                    String actionLabel = app.events().getActionLabel(event);
 
                     if (!involvedJourneyIds.containsKey(actionLabel)) {
                         involvedJourneyIds.put(actionLabel, new LongOpenHashSet());

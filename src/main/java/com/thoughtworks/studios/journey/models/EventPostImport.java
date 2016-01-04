@@ -22,15 +22,15 @@ import org.neo4j.graphdb.Node;
 
 import java.util.Map;
 
-public class RequestPostImport {
+public class EventPostImport {
     private Application app;
-    private Node request;
-    private Map<String, Object> requestAttrs;
+    private Node event;
+    private Map<String, Object> eventAttrs;
 
-    public RequestPostImport(Application app, Node request, Map<String, Object> requestAttrs) {
+    public EventPostImport(Application app, Node event, Map<String, Object> eventAttrs) {
         this.app = app;
-        this.request = request;
-        this.requestAttrs = requestAttrs;
+        this.event = event;
+        this.eventAttrs = eventAttrs;
     }
 
     public void process() {
@@ -55,12 +55,12 @@ public class RequestPostImport {
 
 
     private String getUserIdentifier() {
-        Object identifier = requestAttrs.get("user");
+        Object identifier = eventAttrs.get("user");
         return (identifier == null) ? null : (String) identifier;
     }
 
     private String getAnonymousId(Node journey) {
-        Object anonymousId = requestAttrs.get("anonymous_id");
+        Object anonymousId = eventAttrs.get("anonymous_id");
         if (anonymousId == null) {
             return journeys().getSessionId(journey);
         }
@@ -68,17 +68,17 @@ public class RequestPostImport {
     }
 
     private Node attachingToJourney(Node action) {
-        return journeys().addRequest(getSessionId(), getUserIdentifier(), request, action);
+        return journeys().addEvent(getSessionId(), getUserIdentifier(), event, action);
     }
 
     private String getSessionId() {
-        return (String) requestAttrs.get("session_id");
+        return (String) eventAttrs.get("session_id");
     }
 
     private Node findOrCreateAction() {
-        String actionLabel = (String) requestAttrs.get("action_label");
+        String actionLabel = (String) eventAttrs.get("action_label");
         Node action = actions().findOrCreateByActionLabel(actionLabel);
-        actions().addRequest(action, request);
+        actions().addEvent(action, event);
         return action;
     }
 

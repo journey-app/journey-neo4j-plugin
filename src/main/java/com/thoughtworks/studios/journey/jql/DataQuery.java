@@ -54,7 +54,7 @@ public class DataQuery {
             Iterable<Node> journeys = crossJourney ? journeyQuery.uniqueJourneys() : journeyQuery.journeys();
             List<Select.CollectorBranch> branches = select.getBranches();
             for (Node journey : journeys) {
-                Iterator<Node> iterator = crossJourney ? app.journeys().userRequestsCrossJourneys(journey) : app.journeys().userRequests(journey).iterator();
+                Iterator<Node> iterator = crossJourney ? app.journeys().eventsCrossJourney(journey) : app.journeys().events(journey).iterator();
                 Tuple[] row = new Tuple[stops.size()];
 
                 for (int i = 0; i < row.length; i++) {

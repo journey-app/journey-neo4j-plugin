@@ -44,13 +44,15 @@ public class Journeys implements Models {
     private final Application app;
     private final Map<String, LinkedList<Node>> journeysCache;
     private final ChronologicalChain chainHelper;
+    private final Events events;
     private GraphDatabaseService graphDb;
 
     public Journeys(Application application) {
         this.app = application;
         this.graphDb = application.graphDB();
         this.journeysCache = new HashMap<>();
-        chainHelper = new ChronologicalChain(Requests.PROP_START_AT);
+        chainHelper = new ChronologicalChain(Events.PROP_START_AT);
+        this.events = app.events();
     }
 
     public void setupSchema() {
@@ -77,34 +79,34 @@ public class Journeys implements Models {
         return (Long) node.getProperty(PROP_FINISH_AT);
     }
 
-    public Node addRequest(String sessionId, String userIdentifier, Node request, Node action) {
-        Node journey = findOrCreateCoveredBySessionId(sessionId, request, userIdentifier);
+    public Node addEvent(String sessionId, String userIdentifier, Node event, Node action) {
+        Node journey = findOrCreateCoveredBySessionId(sessionId, event, userIdentifier);
         GraphDbUtils.connectUnique(journey, RelTypes.JOURNEY_ACTIONS, action);
-        expandTimeRange(journey, requests().getStartAt(request));
-        request.createRelationshipTo(journey, RelTypes.BELONGS_TO);
+        expandTimeRange(journey, events.getStartAt(event));
+        event.createRelationshipTo(journey, RelTypes.BELONGS_TO);
         legacyIndex().add(journey, IDX_PROP_ACTION_IDS, new ValueContext(action.getId()).indexNumeric());
-        chainHelper.insert(journey, request);
+        chainHelper.insert(journey, event);
         return journey;
     }
 
-    private void expandTimeRange(Node journey, Long requestTime) {
+    private void expandTimeRange(Node journey, Long eventAt) {
         Index<Node> index = legacyIndex();
-        ValueContext valueContext = new ValueContext(requestTime).indexNumeric();
+        ValueContext valueContext = new ValueContext(eventAt).indexNumeric();
         if (chainHelper.isEmpty(journey)) {
-            journey.setProperty(PROP_START_AT, requestTime);
-            journey.setProperty(PROP_FINISH_AT, requestTime);
+            journey.setProperty(PROP_START_AT, eventAt);
+            journey.setProperty(PROP_FINISH_AT, eventAt);
 
             index.add(journey, PROP_START_AT, valueContext);
             index.add(journey, PROP_FINISH_AT, valueContext);
         } else {
-            if (requestTime < getStartAt(journey)) {
-                journey.setProperty(PROP_START_AT, requestTime);
+            if (eventAt < getStartAt(journey)) {
+                journey.setProperty(PROP_START_AT, eventAt);
                 index.remove(journey, PROP_START_AT);
                 index.add(journey, PROP_START_AT, valueContext);
             }
 
-            if (requestTime > getFinishAt(journey)) {
-                journey.setProperty(PROP_FINISH_AT, requestTime);
+            if (eventAt > getFinishAt(journey)) {
+                journey.setProperty(PROP_FINISH_AT, eventAt);
                 index.remove(journey, PROP_FINISH_AT);
                 index.add(journey, PROP_FINISH_AT, valueContext);
             }
@@ -112,39 +114,35 @@ public class Journeys implements Models {
     }
 
 
-    private Requests requests() {
-        return app.requests();
-    }
-
     // test only
     public long count() {
         return IteratorUtil.count(graphDb.findNodes(getLabel()));
     }
 
     /**
-     * User requests that belongs to the journey, following next link
+     * User events that belongs to the journey, following next link
      *
      * @param journey the journey neo4j node
      * @return nodes belongs to the journey in earliest first order
      */
-    public Iterable<Node> userRequests(final Node journey) {
+    public Iterable<Node> events(final Node journey) {
         return rejectIgnored(chainHelper.nodes(journey));
     }
 
-    private Iterable<Node> rejectIgnored(Iterable<Node> requests) {
+    private Iterable<Node> rejectIgnored(Iterable<Node> evs) {
         return filter(new Predicate<Node>() {
             @Override
-            public boolean accept(Node request) {
-                return !app.actions().isIgnored(requests().action(request));
+            public boolean accept(Node event) {
+                return !app.actions().isIgnored(events.action(event));
             }
-        }, requests);
+        }, evs);
     }
 
-    private Node findOrCreateCoveredBySessionId(String sessionId, Node request, String userIdentifier) {
+    private Node findOrCreateCoveredBySessionId(String sessionId, Node event, String userIdentifier) {
         if (journeysCache.containsKey(sessionId)) {
             LinkedList<Node> journeys = journeysCache.get(sessionId);
             for (Node journey : journeys) {
-                if (covers(journey, request, userIdentifier)) {
+                if (covers(journey, event, userIdentifier)) {
                     return journey;
                 }
             }
@@ -154,7 +152,7 @@ public class Journeys implements Models {
 
         while (journeys.hasNext()) {
             Node journey = journeys.next();
-            if (covers(journey, request, userIdentifier)) {
+            if (covers(journey, event, userIdentifier)) {
                 putIntoCache(sessionId, journey);
                 return journey;
             }
@@ -174,11 +172,11 @@ public class Journeys implements Models {
         journeysCache.get(sessionId).addFirst(journey);
     }
 
-    private boolean covers(Node journey, Node request, String userIdentifier) {
+    private boolean covers(Node journey, Node event, String userIdentifier) {
         String journeyUserId = userIdentifier(journey);
         return (journeyUserId == null || userIdentifier == null || journeyUserId.equals(userIdentifier)) &&
-                requests().getStartAt(request) >= getStartAt(journey) - CUT_TOLERANT &&
-                requests().getStartAt(request) <= getFinishAt(journey) + CUT_TOLERANT;
+                events.getStartAt(event) >= getStartAt(journey) - CUT_TOLERANT &&
+                events.getStartAt(event) <= getFinishAt(journey) + CUT_TOLERANT;
 
     }
 
@@ -187,7 +185,7 @@ public class Journeys implements Models {
         return toHash(journey, Integer.MAX_VALUE, 0);
     }
 
-    public Map<String, Object> toHash(Node journey, int requestsLimit, int requestsOffset) {
+    public Map<String, Object> toHash(Node journey, int eventsLimit, int eventsOffset) {
         Map<String, Object> result = new HashMap<>();
         result.put("id", journey.getId());
         result.put("session_id", getSessionId(journey));
@@ -195,15 +193,15 @@ public class Journeys implements Models {
         result.put("finish_at", getFinishAt(journey));
         result.put("user", app.users().toHash(user(journey)));
 
-        List<Map<String, Object>> reqs = new ArrayList<>();
-        Node lastRequest = null;
-        for (Node request : limit(requestsLimit, skip(requestsOffset, userRequests(journey)))) {
-            lastRequest = request;
-            reqs.add(requests().toHash(request));
+        List<Map<String, Object>> evs = new ArrayList<>();
+        Node lastEvent = null;
+        for (Node event : limit(eventsLimit, skip(eventsOffset, events(journey)))) {
+            lastEvent = event;
+            evs.add(events.toHash(event));
         }
-        result.put("requests", reqs);
-        boolean reachedLast = lastRequest == null
-                || !rejectIgnored(skip(1, chainHelper.nodesAfter(lastRequest))).iterator().hasNext();
+        result.put("events", evs);
+        boolean reachedLast = lastEvent == null
+                || !rejectIgnored(skip(1, chainHelper.nodesAfter(lastEvent))).iterator().hasNext();
         result.put("reached_last", reachedLast);
         return result;
     }
@@ -237,17 +235,17 @@ public class Journeys implements Models {
         return legacyIndex().query(queryContext);
     }
 
-    public Iterable<Node> reversedPrefixFor(Node request) {
-        return rejectIgnored(skip(1, chainHelper.reverseNodesFrom(request)));
+    public Iterable<Node> reversedPrefixFor(Node event) {
+        return rejectIgnored(skip(1, chainHelper.reverseNodesFrom(event)));
     }
 
     public Iterable<Node> reversedPrefixFor(Node journey, String label) {
-        return reversedPrefixFor(firstRequestWithLabel(journey, label));
+        return reversedPrefixFor(firstEventForAction(journey, label));
     }
 
 
-    public Iterable<Node> suffixFor(Node request) {
-        return rejectIgnored(skip(1, chainHelper.nodesAfter(request)));
+    public Iterable<Node> suffixFor(Node event) {
+        return rejectIgnored(skip(1, chainHelper.nodesAfter(event)));
     }
 
     public Iterable<Node> findByIds(String[] ids) {
@@ -281,8 +279,8 @@ public class Journeys implements Models {
         index.add(journey, PROP_START_AT, new ValueContext(getStartAt(journey)).indexNumeric());
         index.add(journey, PROP_FINISH_AT, new ValueContext(getFinishAt(journey)).indexNumeric());
 
-        for (Node request : this.userRequests(journey)) {
-            Node action = app.requests().action(request);
+        for (Node event : this.events(journey)) {
+            Node action = app.events().action(event);
             index.add(journey, IDX_PROP_ACTION_IDS, new ValueContext(action.getId()).indexNumeric());
         }
     }
@@ -291,11 +289,11 @@ public class Journeys implements Models {
         legacyIndex().delete();
     }
 
-    public Node firstRequestWithLabel(Node journey, String actionLabel) {
+    public Node firstEventForAction(Node journey, String actionLabel) {
         Node action = app.actions().findByActionLabel(actionLabel);
-        for (Node request : userRequests(journey)) {
-            if (app.requests().action(request).equals(action)) {
-                return request;
+        for (Node event : events(journey)) {
+            if (app.events().action(event).equals(action)) {
+                return event;
             }
         }
         return null;
@@ -305,12 +303,12 @@ public class Journeys implements Models {
         return GraphDbUtils.getSingleEndNode(journey, RelTypes.NEXT);
     }
 
-    public Iterator<Node> userRequestsCrossJourneys(Node journey) {
+    public Iterator<Node> eventsCrossJourney(Node journey) {
         Iterable<Node> journeys = app.users().journeysFrom(journey);
         return Iterables.flatMap(new Function<Node, Iterator<Node>>() {
             @Override
             public Iterator<Node> apply(Node node) throws RuntimeException {
-                return userRequests(node).iterator();
+                return events(node).iterator();
             }
         }, journeys.iterator());
     }

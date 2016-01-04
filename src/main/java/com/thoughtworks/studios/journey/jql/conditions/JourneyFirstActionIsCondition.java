@@ -37,12 +37,12 @@ public class JourneyFirstActionIsCondition extends QueryCondition {
         return Iterables.filter(new Predicate<Node>() {
             @Override
             public boolean accept(Node journey) {
-                Iterable<Node> requests = app.journeys().userRequests(journey);
-                Node firstRequest = Iterables.first(requests);
-                if(firstRequest == null) {
+                Iterable<Node> events = app.journeys().events(journey);
+                Node firstEvent = Iterables.first(events);
+                if(firstEvent == null) {
                     return false;
                 }
-                Node firstAction = app.requests().action(firstRequest);
+                Node firstAction = app.events().action(firstEvent);
                 return firstAction.equals(expectedAction);
             }
         }, journeys);

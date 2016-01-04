@@ -35,18 +35,18 @@ public class UsersTest extends ModelTestCase {
 
     @Test
     public void importShouldCreateAndConnectJourneyWithUserNode() {
-        Node req1 = requests.add(createRequestAttributes("s1", "a0", dateToMillis(2014, 7, 7, 10), "u1"));
-        Node req2 = requests.add(createRequestAttributes("s1", "a1", dateToMillis(2014, 7, 7, 9), "u1"));
-        Node req3 = requests.add(createRequestAttributes("s2", "a1", dateToMillis(2014, 7, 7, 11), "u2"));
+        Node event1 = events.add(createEventAttributes("s1", "a0", dateToMillis(2014, 7, 7, 10), "u1"));
+        Node event2 = events.add(createEventAttributes("s1", "a1", dateToMillis(2014, 7, 7, 9), "u1"));
+        Node event3 = events.add(createEventAttributes("s2", "a1", dateToMillis(2014, 7, 7, 11), "u2"));
         assertSetEquals(Iterables.<String, String>iterable("u1", "u2"), Iterables.map(pluckIdentifier(), users.findAll()));
 
-        assertEquals(users.findByIdentifier("u1"), journeys.user(requests.journeyOf(req1)));
-        assertEquals(users.findByIdentifier("u1"), journeys.user(requests.journeyOf(req2)));
-        assertEquals(users.findByIdentifier("u2"), journeys.user(requests.journeyOf(req3)));
+        assertEquals(users.findByIdentifier("u1"), journeys.user(events.journeyOf(event1)));
+        assertEquals(users.findByIdentifier("u1"), journeys.user(events.journeyOf(event2)));
+        assertEquals(users.findByIdentifier("u2"), journeys.user(events.journeyOf(event3)));
     }
 
     @Test
-    public void startActiveFieldRecordFirstRequestStartAt() {
+    public void startActiveFieldRecordFirstEventStartAt() {
         Node journey1 = setupJourney(iterable("a0", "a1", "a2"), dateToMillis(2014, 7, 7, 10), "u1");
         Node journey2 = setupJourney(iterable("a2", "a3", "a4"), dateToMillis(2014, 7, 7, 14), "u1");
         Node user = users.findByIdentifier("u1");
@@ -86,12 +86,12 @@ public class UsersTest extends ModelTestCase {
 
     @Test
     public void testShouldIdentifyAnonymousUserForNewUserId() {
-        Node r1 = requests.add(createRequestAttributes("s0", "a0", dateToMillis(2014, 7, 7), (String) null));
-        Node theAnonymousUser = journeys.user(requests.journeyOf(r1));
-        Node r2 = requests.add(createRequestAttributes("s0", "a1", dateToMillis(2014, 7, 7) + 1000, "u1"));
+        Node r1 = events.add(createEventAttributes("s0", "a0", dateToMillis(2014, 7, 7), (String) null));
+        Node theAnonymousUser = journeys.user(events.journeyOf(r1));
+        Node r2 = events.add(createEventAttributes("s0", "a1", dateToMillis(2014, 7, 7) + 1000, "u1"));
 
-        assertEquals(requests.journeyOf(r1), requests.journeyOf(r2));
-        Node identified = journeys.user(requests.journeyOf(r1));
+        assertEquals(events.journeyOf(r1), events.journeyOf(r2));
+        Node identified = journeys.user(events.journeyOf(r1));
         assertFalse(users.isAnonymous(identified));
         assertEquals("u1", users.getIdentifier(identified));
         assertNodeDeleted(theAnonymousUser);
@@ -101,12 +101,12 @@ public class UsersTest extends ModelTestCase {
     public void testShouldLinkPreviousAnonymousJourneysToNewlyIdentifiedUser() {
         Node j0 = setupJourney(iterable("a0", "a1", "a2"), dateToMillis(2014, 7, 4, 10), 2000, null, "s0");
         Node j1 = setupJourney(iterable("a0", "a1", "a2"), dateToMillis(2014, 7, 5, 10), 2000, null, "s0");
-        requests.add(createRequestAttributes("s0", "a0", dateToMillis(2014, 7, 7), (String) null));
-        Node request = requests.add(createRequestAttributes("s0", "a1", dateToMillis(2014, 7, 7) + 1000, "u1"));
+        events.add(createEventAttributes("s0", "a0", dateToMillis(2014, 7, 7), (String) null));
+        Node event = events.add(createEventAttributes("s0", "a1", dateToMillis(2014, 7, 7) + 1000, "u1"));
         assertEquals("u1", users.getIdentifier(journeys.user(j0)));
         assertEquals("u1", users.getIdentifier(journeys.user(j1)));
         assertTrue(journeys.isFirstJourney(j0));
-        assertFalse(journeys.isFirstJourney(requests.journeyOf(request)));
+        assertFalse(journeys.isFirstJourney(events.journeyOf(event)));
     }
 
     @Test
@@ -114,8 +114,8 @@ public class UsersTest extends ModelTestCase {
         Node j0 = setupJourney(iterable("a0", "a1", "a2"), dateToMillis(2014, 7, 4, 10), 2000, null, "s0");
         Node j1 = setupJourney(iterable("a0", "a1", "a2"), dateToMillis(2014, 7, 5, 10), 2000, null, "s0");
         Node j2 = setupJourney(iterable("a0", "a1", "a2"), dateToMillis(2014, 7, 6, 10), 2000, "u1", "s1");
-        requests.add(createRequestAttributes("s0", "a0", dateToMillis(2014, 7, 7), (String) null));
-        Node request = requests.add(createRequestAttributes("s0", "a1", dateToMillis(2014, 7, 7) + 1000, "u1"));
+        events.add(createEventAttributes("s0", "a0", dateToMillis(2014, 7, 7), (String) null));
+        events.add(createEventAttributes("s0", "a1", dateToMillis(2014, 7, 7) + 1000, "u1"));
         assertEquals("u1", users.getIdentifier(journeys.user(j0)));
         assertEquals("u1", users.getIdentifier(journeys.user(j1)));
         assertTrue(journeys.isFirstJourney(j0));
@@ -139,19 +139,19 @@ public class UsersTest extends ModelTestCase {
     @Test
     public void testShouldRemoveAnonymousUserThatIdentifiedToExistingUser() {
         setupJourney(iterable("a0", "a1", "a2"), dateToMillis(2014, 7, 4, 10), 2000, "u1", "s0");
-        Node r1 = requests.add(createRequestAttributes("s1", "a0", dateToMillis(2014, 7, 7), (String) null));
-        Node theAnonymousUser = journeys.user(requests.journeyOf(r1));
-        requests.add(createRequestAttributes("s1", "a1", dateToMillis(2014, 7, 7) + 1000, "u1"));
-        assertEquals("u1", users.getIdentifier(journeys.user(requests.journeyOf(r1))));
+        Node r1 = events.add(createEventAttributes("s1", "a0", dateToMillis(2014, 7, 7), (String) null));
+        Node theAnonymousUser = journeys.user(events.journeyOf(r1));
+        events.add(createEventAttributes("s1", "a1", dateToMillis(2014, 7, 7) + 1000, "u1"));
+        assertEquals("u1", users.getIdentifier(journeys.user(events.journeyOf(r1))));
         assertNodeDeleted(theAnonymousUser);
     }
 
     @Test
     public void testShouldNotUnIdentifyUserToAnonymous() {
         setupJourney(iterable("a0", "a1", "a2"), dateToMillis(2014, 7, 4, 10), 2000, "u1", "s0");
-        requests.add(createRequestAttributes("s1", "a0", dateToMillis(2014, 7, 7), "u1"));
-        Node r = requests.add(createRequestAttributes("s1", "a1", dateToMillis(2014, 7, 7) + 1000, (String) null));
-        Node user = journeys.user(requests.journeyOf(r));
+        events.add(createEventAttributes("s1", "a0", dateToMillis(2014, 7, 7), "u1"));
+        Node r = events.add(createEventAttributes("s1", "a1", dateToMillis(2014, 7, 7) + 1000, (String) null));
+        Node user = journeys.user(events.journeyOf(r));
         assertEquals("u1", users.getIdentifier(user));
         assertFalse(users.isAnonymous(user));
     }

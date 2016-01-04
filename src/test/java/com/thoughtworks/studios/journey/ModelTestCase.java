@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.thoughtworks.studios.journey.TestHelper.assertIterableEquals;
-import static com.thoughtworks.studios.journey.TestHelper.createRequestAttributes;
 import static com.thoughtworks.studios.journey.utils.MapUtils.mapOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -41,7 +40,7 @@ public class ModelTestCase {
     public static final String TEST_NAME_SPACE = "parsley";
     public static final String TEST_NAME_SPACE2 = "acme";
 
-    protected Requests requests;
+    protected Events events;
     protected Journeys journeys;
     protected Actions actions;
     private Transaction tx;
@@ -64,7 +63,7 @@ public class ModelTestCase {
         app = new Application(db, TEST_NAME_SPACE);
         app2 = new Application(db, TEST_NAME_SPACE2);
 
-        requests = app.requests();
+        events = app.events();
         journeys = app.journeys();
         actions = app.actions();
         users = app.users();
@@ -91,12 +90,12 @@ public class ModelTestCase {
     }
 
     protected Node setupJourney(Iterable actions, long startAt, long interval, String uid, String sessionId) {
-        Node request = null;
+        Node event = null;
         for (Object action : actions) {
-            request = requests.add(createRequestAttributes(sessionId, (String) action, startAt, uid));
+            event = events.add(TestHelper.createEventAttributes(sessionId, (String) action, startAt, uid));
             startAt += interval;
         }
-        return requests.journeyOf(request);
+        return events.journeyOf(event);
 
     }
 

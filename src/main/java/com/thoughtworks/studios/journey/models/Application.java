@@ -28,7 +28,7 @@ import static com.thoughtworks.studios.journey.utils.IterableUtils.toIterable;
 
 public class Application {
 
-    private final Requests requests;
+    private final Events events;
     private final Journeys journeys;
     private final Actions actions;
     private final Users users;
@@ -41,13 +41,13 @@ public class Application {
     public Application(GraphDatabaseService graphDB, String ns) {
         this.graphDB = graphDB;
         this.namespace = ns.toUpperCase();
-        requests = new Requests(this);
+        events = new Events(this);
         journeys = new Journeys(this);
         actions = new Actions(this);
         users = new Users(this);
         customProperties = new CustomProperties(this);
         userTraits = new UserTraits(this);
-        models = new Models[]{requests, journeys, actions, users, customProperties, userTraits};
+        models = new Models[]{events, journeys, actions, users, customProperties, userTraits};
     }
 
     /**
@@ -67,8 +67,8 @@ public class Application {
         return userTraits;
     }
 
-    public Requests requests() {
-        return requests;
+    public Events events() {
+        return events;
     }
 
     public Journeys journeys() {

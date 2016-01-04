@@ -82,7 +82,7 @@ public abstract class ValueCollector {
         throw new DataQueryError("'" + expression + "' is not a valid collector");
     }
 
-    public abstract JQLValue values(Node journey, Node request, boolean cross);
+    public abstract JQLValue values(Node journey, Node event, boolean cross);
 
 
     private static class EventPropertyCollector extends ValueCollector {
@@ -95,12 +95,12 @@ public abstract class ValueCollector {
         }
 
         @Override
-        public JQLValue values(Node journey, Node request, boolean cross) {
-            if (request == null) {
+        public JQLValue values(Node journey, Node event, boolean cross) {
+            if (event == null) {
                 return NullValue.instance;
             }
 
-            Set<Object> values = app.requests().values(request, propertyName);
+            Set<Object> values = app.events().values(event, propertyName);
             return Values.wrapMulti(values);
         }
     }
@@ -115,7 +115,7 @@ public abstract class ValueCollector {
         }
 
         @Override
-        public JQLValue values(Node journey, Node request, boolean cross) {
+        public JQLValue values(Node journey, Node event, boolean cross) {
             Node user = app.journeys().user(journey);
             Set<Object> values = app.users().getTraitValue(user, traitName);
             return Values.wrapMulti(values);
@@ -131,7 +131,7 @@ public abstract class ValueCollector {
         }
 
         @Override
-        public JQLValue values(Node journey, Node request, boolean cross) {
+        public JQLValue values(Node journey, Node event, boolean cross) {
             return Values.wrapModel(app.journeys().user(journey), app.users());
         }
     }
@@ -145,7 +145,7 @@ public abstract class ValueCollector {
         }
 
         @Override
-        public JQLValue values(Node journey, Node request, boolean cross) {
+        public JQLValue values(Node journey, Node event, boolean cross) {
             return Values.wrapModel(journey, app.journeys());
         }
     }
@@ -158,11 +158,11 @@ public abstract class ValueCollector {
         }
 
         @Override
-        public JQLValue values(Node journey, Node request, boolean cross) {
-            if (request == null) {
+        public JQLValue values(Node journey, Node event, boolean cross) {
+            if (event == null) {
                 return NullValue.instance;
             }
-            return Values.wrapModel(request, app.requests());
+            return Values.wrapModel(event, app.events());
         }
     }
 
@@ -174,11 +174,11 @@ public abstract class ValueCollector {
         }
 
         @Override
-        public JQLValue values(Node journey, Node request, boolean cross) {
-            if (request == null) {
+        public JQLValue values(Node journey, Node event, boolean cross) {
+            if (event == null) {
                 return NullValue.instance;
             }
-            return Values.wrapSingle(app.requests().getUrl(request));
+            return Values.wrapSingle(app.events().getUrl(event));
         }
     }
 
@@ -192,11 +192,11 @@ public abstract class ValueCollector {
 
 
         @Override
-        public JQLValue values(Node journey, Node request, boolean cross) {
-            if (request == null) {
+        public JQLValue values(Node journey, Node event, boolean cross) {
+            if (event == null) {
                 return NullValue.instance;
             }
-            return Values.wrapSingle(app.requests().getReferrer(request));
+            return Values.wrapSingle(app.events().getReferrer(event));
         }
     }
 
@@ -208,11 +208,11 @@ public abstract class ValueCollector {
         }
 
         @Override
-        public JQLValue values(Node journey, Node request, boolean cross) {
-            if (request == null) {
+        public JQLValue values(Node journey, Node event, boolean cross) {
+            if (event == null) {
                 return NullValue.instance;
             }
-            return Values.wrapSingle(app.requests().getActionLabel(request));
+            return Values.wrapSingle(app.events().getActionLabel(event));
         }
     }
 
@@ -224,11 +224,11 @@ public abstract class ValueCollector {
         }
 
         @Override
-        public JQLValue values(Node journey, Node request, boolean cross) {
-            if (request == null) {
+        public JQLValue values(Node journey, Node event, boolean cross) {
+            if (event == null) {
                 return NullValue.instance;
             }
-            return Values.wrapSingle(app.requests().getStartAt(request));
+            return Values.wrapSingle(app.events().getStartAt(event));
         }
     }
 
@@ -240,7 +240,7 @@ public abstract class ValueCollector {
         }
 
         @Override
-        public JQLValue values(Node journey, Node request, boolean cross) {
+        public JQLValue values(Node journey, Node event, boolean cross) {
             return Values.wrapSingle(app.journeys().getStartAt(journey));
         }
     }
@@ -253,7 +253,7 @@ public abstract class ValueCollector {
         }
 
         @Override
-        public JQLValue values(Node journey, Node request, boolean cross) {
+        public JQLValue values(Node journey, Node event, boolean cross) {
             Journeys journeys = app.journeys();
             return Values.wrapMulti(cross ? journeys.crossActions(journey) : journeys.actions(journey));
         }

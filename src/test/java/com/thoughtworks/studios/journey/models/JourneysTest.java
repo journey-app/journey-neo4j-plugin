@@ -52,11 +52,11 @@ public class JourneysTest extends ModelTestCase {
     }
 
     @Test
-    public void toHashWithEnoughRequestLimit() {
+    public void toHashWithEnoughEventLimit() {
         Map<String, Object> hash = journeys.toHash(j1, 2, 0);
         assertEquals(j1.getId(), hash.get("id"));
         assertEquals(true, hash.get("reached_last"));
-        assertIterableEquals(list("a0", "a1"), map(pluck("action_label"), (Iterable) hash.get("requests")));
+        assertIterableEquals(list("a0", "a1"), map(pluck("action_label"), (Iterable) hash.get("events")));
     }
 
     @Test
@@ -93,34 +93,34 @@ public class JourneysTest extends ModelTestCase {
     }
 
     @Test
-    public void toHashWithRequestLimit() {
+    public void toHashWithEventLimit() {
         Map<String, Object> hash = journeys.toHash(j3, 2, 0);
         assertEquals(j3.getId(), hash.get("id"));
         assertEquals(false, hash.get("reached_last"));
-        assertIterableEquals(list("a2", "a3"), map(pluck("action_label"), (Iterable) hash.get("requests")));
+        assertIterableEquals(list("a2", "a3"), map(pluck("action_label"), (Iterable) hash.get("events")));
     }
 
     @Test
-    public void toHashWithRequestLimitAndOffset() {
+    public void toHashWithEventLimitAndOffset() {
         Map<String, Object> hash = journeys.toHash(j3, 2, 1);
         assertEquals(j3.getId(), hash.get("id"));
         assertEquals(true, hash.get("reached_last"));
-        assertIterableEquals(list("a3", "a0"), map(pluck("action_label"), (Iterable) hash.get("requests")));
+        assertIterableEquals(list("a3", "a0"), map(pluck("action_label"), (Iterable) hash.get("events")));
     }
 
 
     @Test
-    public void requestsShouldListAllActions() {
+    public void eventsShouldListAllActions() {
         assertIterableEquals(iterable("a2", "a3", "a0"),
-                map(app.requests().getActionLabelFn(), journeys.userRequests(j3)));
+                map(app.events().getActionLabelFn(), journeys.events(j3)));
     }
 
 
     @Test
-    public void requestsShouldNotListIgnoredAction() {
+    public void eventsShouldNotListIgnoredAction() {
         actions.ignore(actions.findByActionLabel("a3"));
         assertIterableEquals(iterable("a2", "a0"),
-                map(app.requests().getActionLabelFn(), journeys.userRequests(j3)));
+                map(app.events().getActionLabelFn(), journeys.events(j3)));
 
     }
 
@@ -133,31 +133,31 @@ public class JourneysTest extends ModelTestCase {
     }
 
     @Test
-    public void getPrefixForARequest() {
-        Node a0 = last(journeys.userRequests(j3));
-        Node a2 = first(journeys.userRequests(j3));
-        assertIterableEquals(iterable("a3", "a2"), map(app.requests().getActionLabelFn(), journeys.reversedPrefixFor(a0)));
-        assertIterableEquals(iterable(), map(app.requests().getActionLabelFn(), journeys.reversedPrefixFor(a2)));
+    public void getPrefixForAEvent() {
+        Node a0 = last(journeys.events(j3));
+        Node a2 = first(journeys.events(j3));
+        assertIterableEquals(iterable("a3", "a2"), map(app.events().getActionLabelFn(), journeys.reversedPrefixFor(a0)));
+        assertIterableEquals(iterable(), map(app.events().getActionLabelFn(), journeys.reversedPrefixFor(a2)));
         actions.ignore(actions.findByActionLabel("a2"));
-        assertIterableEquals(iterable("a3"), map(app.requests().getActionLabelFn(), journeys.reversedPrefixFor(a0)));
+        assertIterableEquals(iterable("a3"), map(app.events().getActionLabelFn(), journeys.reversedPrefixFor(a0)));
     }
 
     @Test
     public void getPrefixForAnAction() {
-        assertIterableEquals(iterable("a3", "a2"), map(app.requests().getActionLabelFn(), journeys.reversedPrefixFor(j3, "a0")));
-        assertIterableEquals(iterable("a2"), map(app.requests().getActionLabelFn(), journeys.reversedPrefixFor(j3, "a3")));
-        assertIterableEquals(iterable(), map(app.requests().getActionLabelFn(), journeys.reversedPrefixFor(j3, "a2")));
+        assertIterableEquals(iterable("a3", "a2"), map(app.events().getActionLabelFn(), journeys.reversedPrefixFor(j3, "a0")));
+        assertIterableEquals(iterable("a2"), map(app.events().getActionLabelFn(), journeys.reversedPrefixFor(j3, "a3")));
+        assertIterableEquals(iterable(), map(app.events().getActionLabelFn(), journeys.reversedPrefixFor(j3, "a2")));
     }
 
     @Test
-    public void getSuffixForARequest() {
-        Node a0 = last(journeys.userRequests(j3));
-        Node a2 = first(journeys.userRequests(j3));
-        assertIterableEquals(iterable(), map(app.requests().getActionLabelFn(), journeys.suffixFor(a0)));
-        assertIterableEquals(iterable("a3", "a0"), map(app.requests().getActionLabelFn(), journeys.suffixFor(a2)));
+    public void getSuffixForAEvent() {
+        Node a0 = last(journeys.events(j3));
+        Node a2 = first(journeys.events(j3));
+        assertIterableEquals(iterable(), map(app.events().getActionLabelFn(), journeys.suffixFor(a0)));
+        assertIterableEquals(iterable("a3", "a0"), map(app.events().getActionLabelFn(), journeys.suffixFor(a2)));
 
         actions.ignore(actions.findByActionLabel("a0"));
-        assertIterableEquals(iterable("a3"), map(app.requests().getActionLabelFn(), journeys.suffixFor(a2)));
+        assertIterableEquals(iterable("a3"), map(app.events().getActionLabelFn(), journeys.suffixFor(a2)));
     }
 
     @Test
@@ -187,7 +187,7 @@ public class JourneysTest extends ModelTestCase {
         Node user = users.findByIdentifier("u");
         assertIterableEquals(list(journey1, journey2), users.journeys(user));
 
-        requests.add(createRequestAttributes("j2", "a3", 400L, "u"));
+        events.add(createEventAttributes("j2", "a3", 400L, "u"));
         assertEquals(400L, journeys.getStartAt(journey2).longValue());
         assertIterableEquals(list(journey2, journey1), users.journeys(user));
     }
@@ -197,18 +197,17 @@ public class JourneysTest extends ModelTestCase {
         Function<Node, String> getLabel = new Function<Node, String>() {
             @Override
             public String apply(Node node) throws RuntimeException {
-                return requests.getActionLabel(node);
+                return events.getActionLabel(node);
             }
         };
-        assertIteratorEquals(list("a1", "a2", "a0", "a1").iterator(), map(getLabel, journeys.userRequestsCrossJourneys(j2)));
-        assertIteratorEquals(list("a0", "a1").iterator(), map(getLabel, journeys.userRequestsCrossJourneys(j1)));
+        assertIteratorEquals(list("a1", "a2", "a0", "a1").iterator(), map(getLabel, journeys.eventsCrossJourney(j2)));
+        assertIteratorEquals(list("a0", "a1").iterator(), map(getLabel, journeys.eventsCrossJourney(j1)));
     }
 
     @Test
     public void getGetActions() {
         assertEquals(set("a0", "a1"), journeys.actions(j1));
         assertEquals(set("a0", "a1"), journeys.actions(setupJourney(list("a0", "a0", "a0", "a1"), 100L, "user10")));
-
     }
 
     @Test

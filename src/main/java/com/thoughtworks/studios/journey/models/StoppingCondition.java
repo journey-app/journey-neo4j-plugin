@@ -49,13 +49,13 @@ public class StoppingCondition {
         return match(iterable.iterator());
     }
 
-    public StopMatchResult match(Iterator<Node> requestIterator) {
+    public StopMatchResult match(Iterator<Node> eventIterator) {
         int hitNeeded = qualifier;
-        IterableUtils.RewindableIterator<Node> iterator = IterableUtils.rewindable(requestIterator);
+        IterableUtils.RewindableIterator<Node> iterator = IterableUtils.rewindable(eventIterator);
         boolean matched = false;
         while (iterator.hasNext()) {
-            Node request = iterator.next();
-            if (actionMatcher.match(request)) {
+            Node event = iterator.next();
+            if (actionMatcher.match(event)) {
                 hitNeeded--;
                 if (hitNeeded == 0) {
                     matched = true;
@@ -108,8 +108,8 @@ public class StoppingCondition {
             }
         }
 
-        public boolean match(Node request) {
-            return alwaysMatch || (action != null && app.requests().action(request).equals(action));
+        public boolean match(Node event) {
+            return alwaysMatch || (action != null && app.events().action(event).equals(action));
         }
     }
 }

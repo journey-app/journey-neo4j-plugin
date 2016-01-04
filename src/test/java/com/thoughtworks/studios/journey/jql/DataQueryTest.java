@@ -27,7 +27,6 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.helpers.collection.Iterables;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 
 import static com.thoughtworks.studios.journey.TestHelper.*;
@@ -66,7 +65,7 @@ public class DataQueryTest extends ModelTestCase {
     }
 
     private JQLValue ev(Node event) {
-        return Values.wrapModel(event, requests);
+        return Values.wrapModel(event, events);
     }
 
 
@@ -140,24 +139,24 @@ public class DataQueryTest extends ModelTestCase {
         DataQuery query = new DataQuery(app);
         query.select("event");
         query.stops(list("a1", "a1"));
-        Node r12 = Iterables.toList(journeys.userRequests(j1)).get(1);
-        Node r13 = Iterables.toList(journeys.userRequests(j1)).get(2);
-        Node r21 = Iterables.toList(journeys.userRequests(j2)).get(0);
-        Node r42 = Iterables.toList(journeys.userRequests(j4)).get(1);
+        Node r12 = Iterables.toList(journeys.events(j1)).get(1);
+        Node r13 = Iterables.toList(journeys.events(j1)).get(2);
+        Node r21 = Iterables.toList(journeys.events(j2)).get(0);
+        Node r42 = Iterables.toList(journeys.events(j4)).get(1);
         assertEquals(list(list(t(ev(r12)), t(ev(r21))), list(t(ev(r13)), t(ev(r42)))), query.execute().data());
     }
 
     @Test
     public void testSelectEventProperty() throws IOException {
-        Node r12 = Iterables.toList(journeys.userRequests(j1)).get(1);
-        Node r13 = Iterables.toList(journeys.userRequests(j1)).get(2);
-        Node r21 = Iterables.toList(journeys.userRequests(j2)).get(0);
-        Node r42 = Iterables.toList(journeys.userRequests(j4)).get(1);
+        Node r12 = Iterables.toList(journeys.events(j1)).get(1);
+        Node r13 = Iterables.toList(journeys.events(j1)).get(2);
+        Node r21 = Iterables.toList(journeys.events(j2)).get(0);
+        Node r42 = Iterables.toList(journeys.events(j4)).get(1);
 
-        requests.addProperty(r12, "color", "blue");
-        requests.addProperty(r13, "color", "red");
-        requests.addProperty(r21, "color", "yellow");
-        requests.addProperty(r21, "color", "brown");
+        events.addProperty(r12, "color", "blue");
+        events.addProperty(r13, "color", "red");
+        events.addProperty(r21, "color", "yellow");
+        events.addProperty(r21, "color", "brown");
 
         DataQuery query = new DataQuery(app);
         query.select("event.color");
@@ -167,15 +166,15 @@ public class DataQueryTest extends ModelTestCase {
 
     @Test
     public void testFlattenMultiplePropertyValue() throws IOException {
-        Node r12 = Iterables.toList(journeys.userRequests(j1)).get(1);
-        Node r13 = Iterables.toList(journeys.userRequests(j1)).get(2);
-        Node r21 = Iterables.toList(journeys.userRequests(j2)).get(0);
-        Node r42 = Iterables.toList(journeys.userRequests(j4)).get(1);
+        Node r12 = Iterables.toList(journeys.events(j1)).get(1);
+        Node r13 = Iterables.toList(journeys.events(j1)).get(2);
+        Node r21 = Iterables.toList(journeys.events(j2)).get(0);
+        Node r42 = Iterables.toList(journeys.events(j4)).get(1);
 
-        requests.addProperty(r12, "color", "blue");
-        requests.addProperty(r13, "color", "red");
-        requests.addProperty(r21, "color", "yellow");
-        requests.addProperty(r21, "color", "brown");
+        events.addProperty(r12, "color", "blue");
+        events.addProperty(r13, "color", "red");
+        events.addProperty(r21, "color", "yellow");
+        events.addProperty(r21, "color", "brown");
 
         DataQuery query = new DataQuery(app);
         query.select("event.color |> flatten");
@@ -187,15 +186,15 @@ public class DataQueryTest extends ModelTestCase {
 
     @Test
     public void testCompactNullValue() throws IOException {
-        Node r12 = Iterables.toList(journeys.userRequests(j1)).get(1);
-        Node r13 = Iterables.toList(journeys.userRequests(j1)).get(2);
-        Node r21 = Iterables.toList(journeys.userRequests(j2)).get(0);
-        Node r42 = Iterables.toList(journeys.userRequests(j4)).get(1);
+        Node r12 = Iterables.toList(journeys.events(j1)).get(1);
+        Node r13 = Iterables.toList(journeys.events(j1)).get(2);
+        Node r21 = Iterables.toList(journeys.events(j2)).get(0);
+        Node r42 = Iterables.toList(journeys.events(j4)).get(1);
 
-        requests.addProperty(r12, "color", "blue");
-        requests.addProperty(r13, "color", "red");
-        requests.addProperty(r21, "color", "yellow");
-        requests.addProperty(r21, "color", "brown");
+        events.addProperty(r12, "color", "blue");
+        events.addProperty(r13, "color", "red");
+        events.addProperty(r21, "color", "yellow");
+        events.addProperty(r21, "color", "brown");
 
         DataQuery query = new DataQuery(app);
         query.select("event.color |> compact |> flatten");
@@ -207,16 +206,16 @@ public class DataQueryTest extends ModelTestCase {
 
     @Test
     public void testGroupCounting() throws IOException {
-        Node r12 = Iterables.toList(journeys.userRequests(j1)).get(1);
-        Node r13 = Iterables.toList(journeys.userRequests(j1)).get(2);
-        Node r21 = Iterables.toList(journeys.userRequests(j2)).get(0);
-        Node r42 = Iterables.toList(journeys.userRequests(j4)).get(1);
+        Node r12 = Iterables.toList(journeys.events(j1)).get(1);
+        Node r13 = Iterables.toList(journeys.events(j1)).get(2);
+        Node r21 = Iterables.toList(journeys.events(j2)).get(0);
+        Node r42 = Iterables.toList(journeys.events(j4)).get(1);
 
-        requests.addProperty(r12, "color", "blue");
-        requests.addProperty(r12, "color", "brown");
-        requests.addProperty(r13, "color", "red");
-        requests.addProperty(r21, "color", "yellow");
-        requests.addProperty(r21, "color", "brown");
+        events.addProperty(r12, "color", "blue");
+        events.addProperty(r12, "color", "brown");
+        events.addProperty(r13, "color", "red");
+        events.addProperty(r21, "color", "yellow");
+        events.addProperty(r21, "color", "brown");
 
         DataQuery query = new DataQuery(app);
         query.select("event.color |> group_count");
@@ -226,16 +225,16 @@ public class DataQueryTest extends ModelTestCase {
 
     @Test
     public void testGroupCountingWithFlattening() throws IOException {
-        Node r12 = Iterables.toList(journeys.userRequests(j1)).get(1);
-        Node r13 = Iterables.toList(journeys.userRequests(j1)).get(2);
-        Node r21 = Iterables.toList(journeys.userRequests(j2)).get(0);
-        Node r42 = Iterables.toList(journeys.userRequests(j4)).get(1);
+        Node r12 = Iterables.toList(journeys.events(j1)).get(1);
+        Node r13 = Iterables.toList(journeys.events(j1)).get(2);
+        Node r21 = Iterables.toList(journeys.events(j2)).get(0);
+        Node r42 = Iterables.toList(journeys.events(j4)).get(1);
 
-        requests.addProperty(r12, "color", "blue");
-        requests.addProperty(r12, "color", "brown");
-        requests.addProperty(r13, "color", "red");
-        requests.addProperty(r21, "color", "yellow");
-        requests.addProperty(r21, "color", "brown");
+        events.addProperty(r12, "color", "blue");
+        events.addProperty(r12, "color", "brown");
+        events.addProperty(r13, "color", "red");
+        events.addProperty(r21, "color", "yellow");
+        events.addProperty(r21, "color", "brown");
 
         DataQuery query = new DataQuery(app);
         query.select("event.color |> flatten |> group_count");
@@ -261,9 +260,9 @@ public class DataQueryTest extends ModelTestCase {
 
     @Test
     public void testSelectUrlQueryValue() throws IOException {
-        Node r12 = Iterables.toList(journeys.userRequests(j1)).get(1);
+        Node r12 = Iterables.toList(journeys.events(j1)).get(1);
         r12.setProperty("url", "/url/a1?foo=bar");
-        Node r21 = Iterables.toList(journeys.userRequests(j2)).get(0);
+        Node r21 = Iterables.toList(journeys.events(j2)).get(0);
         r21.setProperty("url", "/url/a1?foo=baz");
 
         DataQuery query = new DataQuery(app);
@@ -274,9 +273,9 @@ public class DataQueryTest extends ModelTestCase {
 
     @Test
     public void testSelectReferrerDomain() throws IOException {
-        Node r12 = Iterables.toList(journeys.userRequests(j1)).get(1);
+        Node r12 = Iterables.toList(journeys.events(j1)).get(1);
         r12.setProperty("referrer", "https://www.google.com/url/a1?foo=bar");
-        Node r21 = Iterables.toList(journeys.userRequests(j2)).get(0);
+        Node r21 = Iterables.toList(journeys.events(j2)).get(0);
         r21.setProperty("referrer", "https://www.facebook.com/url/a1?foo=baz");
 
         DataQuery query = new DataQuery(app);

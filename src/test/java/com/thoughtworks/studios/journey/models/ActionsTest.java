@@ -33,22 +33,22 @@ public class ActionsTest extends ModelTestCase {
 
     @Test
     public void importShouldCreateActions() {
-        Node req1 = requests.add(createRequestAttributes("s1", "a0", 100L));
-        Node req2 = requests.add(createRequestAttributes("s1", "a1", 50L));
-        Node req3 = requests.add(createRequestAttributes("s1", "a1", 200L));
+        Node event1 = events.add(createEventAttributes("s1", "a0", 100L));
+        Node event2 = events.add(createEventAttributes("s1", "a1", 50L));
+        Node event3 = events.add(createEventAttributes("s1", "a1", 200L));
 
-        assertEquals("a0", requests.getActionLabel(req1));
-        assertEquals("a1", requests.getActionLabel(req2));
-        assertEquals("a1", requests.getActionLabel(req3));
-        assertNotEquals(requests.action(req2), requests.action(req1));
-        assertEquals(requests.action(req2), requests.action(req3));
+        assertEquals("a0", events.getActionLabel(event1));
+        assertEquals("a1", events.getActionLabel(event2));
+        assertEquals("a1", events.getActionLabel(event3));
+        assertNotEquals(events.action(event2), events.action(event1));
+        assertEquals(events.action(event2), events.action(event3));
     }
 
     @Test
     public void allShouldExcludeIgnoredActions() {
-        requests.add(createRequestAttributes("s1", "a0", dateToMillis(2014, 12, 5)));
-        requests.add(createRequestAttributes("s1", "a1", dateToMillis(2014, 12, 6)));
-        requests.add(createRequestAttributes("s1", "a2", dateToMillis(2014, 12, 6)));
+        events.add(createEventAttributes("s1", "a0", dateToMillis(2014, 12, 5)));
+        events.add(createEventAttributes("s1", "a1", dateToMillis(2014, 12, 6)));
+        events.add(createEventAttributes("s1", "a2", dateToMillis(2014, 12, 6)));
 
         actions.ignore(actions.findByActionLabel("a1"));
         assertSetEquals(list(action("a0"), action("a2")), actions.allExcludeIgnored());
@@ -58,7 +58,7 @@ public class ActionsTest extends ModelTestCase {
 
     @Test
     public void tesGetHttpMethodOfAnAction() {
-        requests.add(createRequestAttributes("s1", "a2", dateToMillis(2014, 12, 7), "http://foo.bar.com", "POST", "d2", "u2", MapUtils.<String, Object>mapOf()));
+        events.add(createEventAttributes("s1", "a2", dateToMillis(2014, 12, 7), "http://foo.bar.com", "POST", "d2", "u2", MapUtils.<String, Object>mapOf()));
 
         Node a2 = actions.findByActionLabel("a2");
         assertEquals("POST", actions.getHttpMethod(a2));

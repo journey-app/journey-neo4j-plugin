@@ -32,7 +32,7 @@ import java.util.Set;
 import static com.thoughtworks.studios.journey.utils.GraphDbUtils.getSingleEndNode;
 import static com.thoughtworks.studios.journey.utils.GraphDbUtils.propertyValueOrNull;
 
-public class Requests implements Models {
+public class Events implements Models {
 
     static final String PROP_START_AT = "start_at";
     private static final String PROP_DIGEST = "digest";
@@ -46,13 +46,13 @@ public class Requests implements Models {
 
     private GraphDatabaseService graphDb;
 
-    public Requests(Application application) {
+    public Events(Application application) {
         this.app = application;
         this.graphDb = app.graphDB();
     }
 
     /**
-     * Setup request related schema for the namespace
+     * Setup event related schema for the namespace
      */
     public void setupSchema() {
         GraphDbUtils.createIndexIfNotExists(graphDb, getLabel(), PROP_START_AT);
@@ -72,24 +72,24 @@ public class Requests implements Models {
     }
 
     /**
-     * This method add single request to the database
+     * This method add single event to the database
      *
-     * @param requestAttrs : map of attributes
+     * @param eventAttrs : map of attributes
      */
-    public Node add(Map<String, Object> requestAttrs) {
-        String digest = (String) requestAttrs.get("digest");
-        if (requestExists(digest)) {
+    public Node add(Map<String, Object> eventAttrs) {
+        String digest = (String) eventAttrs.get("digest");
+        if (eventExists(digest)) {
             return null;
         }
-        Node request = createRequestNode(requestAttrs);
-        RequestPostImport processor = new RequestPostImport(app, request, requestAttrs);
+        Node node = createEventNode(eventAttrs);
+        EventPostImport processor = new EventPostImport(app, node, eventAttrs);
         processor.process();
 
-        return request;
+        return node;
     }
 
 
-    private boolean requestExists(String digest) {
+    private boolean eventExists(String digest) {
         return findByDigest(digest) != null;
     }
 
@@ -97,7 +97,7 @@ public class Requests implements Models {
         return app.actions();
     }
 
-    private Node createRequestNode(Map<String, Object> attributes) {
+    private Node createEventNode(Map<String, Object> attributes) {
         Node node = graphDb.createNode(getLabel());
         node.setProperty(PROP_DIGEST, attributes.get("digest"));
         node.setProperty(PROP_START_AT, ((Number) attributes.get("start_at")).longValue());
@@ -124,21 +124,21 @@ public class Requests implements Models {
     }
 
 
-    private void processProperties(Node request, Map<String, Object> requestAttrs) {
-        Object properties = requestAttrs.get("properties");
+    private void processProperties(Node event, Map<String, Object> eventAttrs) {
+        Object properties = eventAttrs.get("properties");
         if (properties != null) {
             //noinspection unchecked
             Map<String, Object> propertiesMap = (Map<String, Object>) properties;
             Set<String> propertyNames = propertiesMap.keySet();
             for (String propertyName : propertyNames) {
                 Object propertyValue = propertiesMap.get(propertyName);
-                addProperty(request, propertyName, propertyValue);
+                addProperty(event, propertyName, propertyValue);
             }
         }
     }
 
-    public void addProperty(Node request, String propertyName, Object propertyValue) {
-        app.customProperties().setProperty(request, propertyName, propertyValue);
+    public void addProperty(Node event, String propertyName, Object propertyValue) {
+        app.customProperties().setProperty(event, propertyName, propertyValue);
     }
 
 
@@ -154,58 +154,58 @@ public class Requests implements Models {
         return IteratorUtil.count(graphDb.findNodes(getLabel()));
     }
 
-    public Node journeyOf(Node request) {
-        return getSingleEndNode(request, RelTypes.BELONGS_TO);
+    public Node journeyOf(Node event) {
+        return getSingleEndNode(event, RelTypes.BELONGS_TO);
     }
 
-    public Map<String, Object> toHash(Node request) {
+    public Map<String, Object> toHash(Node event) {
         HashMap<String, Object> result = new HashMap<>();
-        result.put("id", request.getId());
-        result.put("url", getUrl(request));
-        result.put("start_at", getStartAt(request));
-        result.put("http_method", getHttpMethod(request));
-        result.put("client_ip", getClientIp(request));
-        result.put("status_code", getStatusCode(request));
-        result.put("action_label", getActionLabel(request));
-        result.put("referrer", getReferrer(request));
-        result.put("properties", properties(request));
+        result.put("id", event.getId());
+        result.put("url", getUrl(event));
+        result.put("start_at", getStartAt(event));
+        result.put("http_method", getHttpMethod(event));
+        result.put("client_ip", getClientIp(event));
+        result.put("status_code", getStatusCode(event));
+        result.put("action_label", getActionLabel(event));
+        result.put("referrer", getReferrer(event));
+        result.put("properties", properties(event));
         return result;
     }
 
-    public String getReferrer(Node request) {
-        return (String) propertyValueOrNull(request, PROP_REFERRER);
+    public String getReferrer(Node event) {
+        return (String) propertyValueOrNull(event, PROP_REFERRER);
     }
 
-    private Integer getStatusCode(Node request) {
-        return (Integer) propertyValueOrNull(request, PROP_STATUS_CODE);
+    private Integer getStatusCode(Node event) {
+        return (Integer) propertyValueOrNull(event, PROP_STATUS_CODE);
     }
 
-    private String getClientIp(Node request) {
-        return (String) propertyValueOrNull(request, PROP_CLIENT_IP);
+    private String getClientIp(Node event) {
+        return (String) propertyValueOrNull(event, PROP_CLIENT_IP);
     }
 
-    public String getActionLabel(Node request) {
-        return actions().getActionLabel(action(request));
+    public String getActionLabel(Node event) {
+        return actions().getActionLabel(action(event));
     }
 
-    public Node action(Node request) {
-        return getSingleEndNode(request, RelTypes.ACTION);
+    public Node action(Node event) {
+        return getSingleEndNode(event, RelTypes.ACTION);
     }
 
     public Function<Node, String> getActionLabelFn() {
         return new Function<Node, String>() {
             @Override
-            public String apply(Node request) {
-                return getActionLabel(request);
+            public String apply(Node event) {
+                return getActionLabel(event);
             }
         };
     }
 
-    public Map<String, Set> properties(Node request) {
-        return app.customProperties().properties(request);
+    public Map<String, Set> properties(Node event) {
+        return app.customProperties().properties(event);
     }
 
-    public Set<Object> values(Node request, String propertyName) {
-        return app.customProperties().getProperty(request, propertyName);
+    public Set<Object> values(Node event, String propertyName) {
+        return app.customProperties().getProperty(event, propertyName);
     }
 }

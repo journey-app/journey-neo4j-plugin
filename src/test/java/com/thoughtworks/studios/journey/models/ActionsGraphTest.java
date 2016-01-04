@@ -35,7 +35,7 @@ public class ActionsGraphTest extends ModelTestCase {
     public void forOneStepSingleJourneyGraph() {
         Node j1 = setupJourney(iterable("a0"), dateToMillis(2015, 1, 1));
         ActionsGraph graph = new ActionsGraph(app, 100);
-        graph.add(journeys.userRequests(j1));
+        graph.add(journeys.events(j1));
         assertEquals(list("$start", "a0"), getNodeNames(graph.nodes()));
         assertEquals(set(list("$start", "a0", "1")), getLinkage(graph));
     }
@@ -44,7 +44,7 @@ public class ActionsGraphTest extends ModelTestCase {
     public void forMultiStepSingleJourneyGraph() {
         Node j1 = setupJourney(iterable("a0", "a1", "a2"), dateToMillis(2015, 1, 1));
         ActionsGraph graph = new ActionsGraph(app, 100);
-        graph.add(journeys.userRequests(j1));
+        graph.add(journeys.events(j1));
         assertEquals(list("$start", "a0", "a1", "a2"), getNodeNames(graph.nodes()));
         assertEquals(set(list("$start", "a0", "1"), list("a0", "a1", "1"), list("a1", "a2", "1")), getLinkage(graph));
     }
@@ -55,8 +55,8 @@ public class ActionsGraphTest extends ModelTestCase {
         Node j1 = setupJourney(iterable("a0", "a1", "a2"), dateToMillis(2015, 1, 1));
         Node j2 = setupJourney(iterable("a0", "a1", "a3"), dateToMillis(2015, 1, 1));
         ActionsGraph graph = new ActionsGraph(app, 100);
-        graph.add(journeys.userRequests(j1));
-        graph.add(journeys.userRequests(j2));
+        graph.add(journeys.events(j1));
+        graph.add(journeys.events(j2));
         assertEquals(list("$start", "a0", "a1", "a2", "a3"), getNodeNames(graph.nodes()));
         assertEquals(set(list("$start", "a0", "2"), list("a0", "a1", "2"), list("a1", "a2", "1"), list("a1", "a3", "1")), getLinkage(graph));
     }
@@ -65,7 +65,7 @@ public class ActionsGraphTest extends ModelTestCase {
     public void shouldNotGenerateBackLoop() {
         Node j1 = setupJourney(iterable("a0", "a1", "a2", "a0"), dateToMillis(2015, 1, 1));
         ActionsGraph graph = new ActionsGraph(app, 100);
-        graph.add(journeys.userRequests(j1));
+        graph.add(journeys.events(j1));
         assertEquals(list("$start", "a0", "a1", "a2", "a0"), getNodeNames(graph.nodes()));
         assertEquals(set(list(0, 1, 1), list(1, 2, 1), list(2, 3, 1), list(3, 4, 1)), getLinkage2(graph));
     }

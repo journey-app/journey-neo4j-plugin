@@ -77,8 +77,8 @@ public class Actions implements Models {
     }
 
     public String getHttpMethod(Node action) {
-        Node firstRequest = first(requests(action));
-        return app.requests().getHttpMethod(firstRequest);
+        Node firstEvent = first(events(action));
+        return app.events().getHttpMethod(firstEvent);
     }
 
     public Node findByActionLabel(String actionLabel) {
@@ -86,8 +86,8 @@ public class Actions implements Models {
     }
 
 
-    public void addRequest(Node action, Node request) {
-        connectSingle(request, RelTypes.ACTION, action);
+    public void addEvent(Node action, Node event) {
+        connectSingle(event, RelTypes.ACTION, action);
     }
 
 
@@ -114,7 +114,7 @@ public class Actions implements Models {
     }
 
 
-    public Iterable<Node> requests(Node action) {
+    public Iterable<Node> events(Node action) {
         return getStartNodes(action, RelTypes.ACTION);
     }
 
