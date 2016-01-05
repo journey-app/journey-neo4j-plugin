@@ -58,6 +58,11 @@ public class JourneyService {
         this.graphDB = graphDB;
     }
 
+    /**
+     * API for testing plugin installed correctly
+     *
+     * @return 200 response
+     */
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/status")
@@ -65,6 +70,12 @@ public class JourneyService {
         return Response.status(Response.Status.OK).entity("OK").build();
     }
 
+    /**
+     * API for setup a schema namespace (indexes)
+     *
+     * @param ns: namespace name
+     * @return 200 response
+     */
     @POST
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{ns}/setup_schema")
@@ -83,6 +94,12 @@ public class JourneyService {
         return Response.status(Response.Status.OK).build();
     }
 
+    /**
+     * API for exporting all data under a namespace
+     *
+     * @param ns: namespace name
+     * @return 200 response if migrate finished
+     */
     @POST
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{ns}/export")
@@ -100,6 +117,15 @@ public class JourneyService {
         return Response.ok(stream).build();
     }
 
+    /**
+     * API for importing data exported via export api. The importing does not setup all the indexes,
+     * so user need run /reindex api after importing.
+     *
+     * @param ns:     namespace
+     * @param stream: request body stream
+     * @return 200 response if import success
+     * @throws IOException
+     */
     @POST
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{ns}/import")
@@ -124,6 +150,12 @@ public class JourneyService {
         return Response.status(Response.Status.OK).build();
     }
 
+    /**
+     * API for run migrations under the namespace
+     *
+     * @param ns namespace name
+     * @return 200 response
+     */
     @POST
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{ns}/migrate")
@@ -156,6 +188,12 @@ public class JourneyService {
         return Response.status(Response.Status.OK).build();
     }
 
+    /**
+     * API for destroying all data under a namespace
+     *
+     * @param ns namespace name
+     * @return 200 response
+     */
     @POST
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{ns}/destroy")
@@ -183,6 +221,12 @@ public class JourneyService {
     }
 
 
+    /**
+     * API for reindex journeys.
+     *
+     * @param ns namespace under operation
+     * @return 200 response
+     */
     @POST
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/{ns}/reindex")
@@ -205,11 +249,11 @@ public class JourneyService {
                 tx.success();
             }
 
-            for (Long id : ids) {
-                try (Transaction tx = graphDB.beginTx()) {
+            try (BatchTransaction tx = new BatchTransaction(graphDB, 100)) {
+                for (Long id : ids) {
                     Node journey = graphDB.getNodeById(id);
                     app.journeys().reindex(journey);
-                    tx.success();
+                    tx.increment();
                 }
             }
         } finally {
@@ -220,6 +264,26 @@ public class JourneyService {
     }
 
 
+    /**
+     * API for adding multiple events.
+     * Post events via request body in json format. e.g.
+     *   [{
+     *      "action_label":"do x",
+     *      "start_at":1451956588844,
+     *      "digest":"907e7d49",
+     *      "anonymous_id":"9f0d0311",
+     *      "session_id":"9f0d0311",
+     *      "user":"johndoe@example.com",
+     *      "properties":{
+     *          "prop-a":"foo",
+     *          "prop-b":"bar"
+     *      }
+     *    }]
+     * @param ns: namespace under operation
+     * @param eventsJSON: request body, json format, array event
+     * @return 201 response
+     * @throws IOException
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -246,6 +310,15 @@ public class JourneyService {
         return Response.status(Response.Status.CREATED).build();
     }
 
+    /**
+     * API for identify a user and setup traits.
+     * @param ns: namespace under operation
+     * @param uid: unique identify for the user
+     * @param anonymousId: anonymous_id to associate existing anonymous events
+     * @param traitsJSON: request body for traits for the user
+     * @return 201 response
+     * @throws IOException
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -288,6 +361,17 @@ public class JourneyService {
         return lock;
     }
 
+    /**
+     * API for query journeys
+     * @param ns: namespace under operation
+     * @param queryJson: journey conditions. json format.
+     * @param limit: limit of return result
+     * @param offset: offset the result from start from
+     * @param descOrder: whether in desc order
+     * @param eventsLimit: max events loaded per journey
+     * @return array of journeys in JSON format
+     * @throws IOException
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{ns}/journeys")
@@ -386,6 +470,16 @@ public class JourneyService {
     }
 
 
+    /**
+     * API for general data queries.
+     * @param ns: namespace under operation.
+     * @param select: select expression. Reference the data query document.
+     * @param whereJson: journey conditions.
+     * @param stopsJson: stop expression. Reference the data query document.
+     * @param cross: whether to connect journeys for same user.
+     * @return json format array of array of array.
+     * @throws IOException
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{ns}/query")
@@ -455,6 +549,15 @@ public class JourneyService {
     }
 
 
+    /**
+     * API to load journeys by ids.
+     * @param ns: namespace under operation.
+     * @param ids: journey ids, numbers separated by ','.
+     * @param eventsLimit: max number of events to be loaded per journey.
+     * @param eventsOffset: offset for events pagination.
+     * @return array of journeys in JSON format.
+     * @throws IOException
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{ns}/journeys/{ids}")
@@ -611,6 +714,14 @@ public class JourneyService {
     }
 
 
+    /**
+     * API for ignore or recover a label.
+     * @param ns: namespace under operation.
+     * @param label: label of action to be ignored or recovered.
+     * @param toggle: 'true' for ignore, 'false' for recover.
+     * @return 200 response.
+     * @throws IOException
+     */
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{ns}/ignore_action")
@@ -633,9 +744,8 @@ public class JourneyService {
     }
 
     /**
-     * Get allExcludeIgnored action labels under namespace
-     *
-     * @param ns namespace of the app
+     * API for getting action labels under namespace (ignored label are excluded)
+     * @param ns: namespace under operation
      * @return json format of list of string label
      * @throws IOException
      */
@@ -654,14 +764,32 @@ public class JourneyService {
 
         Collections.sort(labels);
         return jsonOkResponse(labels);
-
     }
 
+    /**
+     * API for getting all ignored actions
+     * @param ns: namespace under operation
+     * @return list of action label in json format
+     * @throws IOException
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{ns}/ignored_action_labels")
+    public Response ignoredActionLabels(@PathParam("ns") String ns) throws IOException {
+        Application app = new Application(graphDB, ns);
+        LinkedList<String> labels = new LinkedList<>();
+        try (Transaction ignored = graphDB.beginTx()) {
+            Iterable<Node> actions = app.actions().allIgnored();
+            for (Node action : actions) {
+                labels.addLast(app.actions().getActionLabel(action));
+            }
+        }
+        return jsonOkResponse(labels);
+    }
 
     /**
-     * Get all custom property names under namespace
-     *
-     * @param ns namespace of the app
+     * API for getting all custom property names under namespace
+     * @param ns namespace under operation
      * @return json format of list of string label
      * @throws IOException
      */
@@ -685,9 +813,8 @@ public class JourneyService {
     }
 
     /**
-     * Get all user traits names under namespace
-     *
-     * @param ns namespace of the app
+     * API for getting all user traits names under namespace
+     * @param ns namespace under operation
      * @return json format of list of string
      * @throws IOException
      */
@@ -713,7 +840,7 @@ public class JourneyService {
      * Get sample values for all traits. OK it is not really a sampling for the performance reason.
      * What we get are likely to be added values because of how neo4j store the relationships
      *
-     * @param ns namespace of the app
+     * @param ns namespace under operation
      * @return json format of map of trait name and values
      * @throws IOException
      */
@@ -735,20 +862,4 @@ public class JourneyService {
         return jsonOkResponse(sampleResult);
     }
 
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{ns}/ignored_action_labels")
-    public Response ignoredActionLabels(@PathParam("ns") String ns) throws IOException {
-        Application app = new Application(graphDB, ns);
-        LinkedList<String> labels = new LinkedList<>();
-        try (Transaction ignored = graphDB.beginTx()) {
-            Iterable<Node> actions = app.actions().allIgnored();
-            for (Node action : actions) {
-                labels.addLast(app.actions().getActionLabel(action));
-            }
-        }
-        return jsonOkResponse(labels);
-
-    }
 }
