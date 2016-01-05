@@ -147,6 +147,7 @@ public class JourneyService {
                     Node node = graphDB.getNodeById(id);
                     node.removeLabel(requestLabel);
                     node.addLabel(app.events().getLabel());
+                    tx.increment();
                 }
             }
         } finally {
