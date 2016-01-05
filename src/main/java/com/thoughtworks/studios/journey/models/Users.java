@@ -32,8 +32,6 @@ import static org.neo4j.helpers.collection.Iterables.map;
 
 public class Users implements Models {
     private static final String PROP_IDENTIFIER = "identifier";
-    private static final String PROP_START_ACTIVE_AT = "start_active_at";
-    private static final String PROP_LAST_ACTIVE_AT = "last_active_at";
     private static final String PROP_ANONYMOUS_ID = "anonymous_id";
     private final Application app;
     private final ChronologicalChain journeysChainHelper;
