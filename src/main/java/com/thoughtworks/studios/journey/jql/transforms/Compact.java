@@ -19,19 +19,19 @@
 package com.thoughtworks.studios.journey.jql.transforms;
 
 import com.thoughtworks.studios.journey.jql.Tuple;
+import org.neo4j.helpers.Predicate;
+import org.neo4j.helpers.collection.Iterables;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Compact implements ColumnTransformFn {
     @Override
-    public List<Tuple> apply(List<Tuple> column, String... params) {
-        ArrayList<Tuple> result = new ArrayList<>(column.size());
-        for (Tuple tuple: column) {
-            if(!tuple.isAllNull()) {
-                result.add(tuple);
+    public Iterable<Tuple> apply(Iterable<Tuple> column, String... params) {
+        return Iterables.filter(new Predicate<Tuple>() {
+            @Override
+            public boolean accept(Tuple item) {
+                return !item.isAllNull();
             }
-        }
-        return result;
+        }, column);
     }
 }

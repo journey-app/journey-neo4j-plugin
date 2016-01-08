@@ -19,18 +19,21 @@
 package com.thoughtworks.studios.journey.jql.transforms;
 
 import com.thoughtworks.studios.journey.jql.Tuple;
+import org.neo4j.function.Function;
+import org.neo4j.helpers.collection.Iterables;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Take implements ColumnTransformFn {
     @Override
-    public List<Tuple> apply(List<Tuple> column, String... params) {
-        int index = Integer.parseInt(params[0]);
-        ArrayList<Tuple> result = new ArrayList<>(column.size());
-        for (Tuple tuple : column) {
-            result.add(tuple.take(index));
-        }
-        return result;
+    public Iterable<Tuple> apply(Iterable<Tuple> column, String... params) {
+
+        final int index = Integer.parseInt(params[0]);
+        return Iterables.map(new Function<Tuple, Tuple>() {
+            @Override
+            public Tuple apply(Tuple tuple) throws RuntimeException {
+                return tuple.take(index);
+            }
+        }, column);
     }
 }

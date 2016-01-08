@@ -24,8 +24,7 @@ import org.neo4j.function.Function;
 import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.collection.Iterables;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 import static org.neo4j.helpers.collection.Iterables.filter;
 
@@ -62,6 +61,45 @@ public class IterableUtils {
 
     public static <T> RewindableIterator<T> rewindable(Iterator<T> original) {
         return new RewindableIterator<T>(original);
+    }
+
+    public static <T> Iterable<T> uniqueBy(final Function<T, Object> function, final Iterable<T> iterable) {
+        return new Iterable<T>() {
+            @Override
+            public Iterator<T> iterator() {
+                final Iterator<T> iterator = iterable.iterator();
+
+                return new Iterator<T>() {
+                    Set<Object> keys = new HashSet<>();
+                    T nextItem;
+
+                    @Override
+                    public boolean hasNext() {
+                        while (iterator.hasNext()) {
+                            nextItem = iterator.next();
+                            if (keys.add(function.apply(nextItem))) {
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    }
+
+                    @Override
+                    public T next() {
+                        if (nextItem == null && !hasNext()) {
+                            throw new NoSuchElementException();
+                        }
+
+                        return nextItem;
+                    }
+
+                    @Override
+                    public void remove() {
+                    }
+                };
+            }
+        };
     }
 
     public static class RewindableIterator<T> implements Iterator<T> {

@@ -19,19 +19,23 @@
 package com.thoughtworks.studios.journey.jql.transforms;
 
 import com.thoughtworks.studios.journey.jql.Tuple;
+import com.thoughtworks.studios.journey.utils.IterableUtils;
+import org.neo4j.function.Function;
+import org.neo4j.helpers.collection.Iterables;
+import org.neo4j.helpers.collection.IteratorUtil;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
 
 public class Flatten implements ColumnTransformFn {
     @Override
-    public List<Tuple> apply(List<Tuple> column, String... params) {
-        ArrayList<Tuple> result = new ArrayList<>(column.size());
-        for (Tuple tuple : column) {
-            for (Tuple flattened : tuple) {
-                result.add(flattened);
+    public Iterable<Tuple> apply(Iterable<Tuple> column, String... params) {
+        Iterator<Tuple> iterator = Iterables.flatMap(new Function<Tuple, Iterator<Tuple>>() {
+            @Override
+            public Iterator<Tuple> apply(Tuple tuple) throws RuntimeException {
+                return tuple.iterator();
             }
-        }
-        return result;
+        }, column.iterator());
+        return IterableUtils.toIterable(iterator);
     }
 }

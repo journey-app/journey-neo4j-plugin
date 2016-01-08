@@ -20,12 +20,15 @@ package com.thoughtworks.studios.journey.jql;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.thoughtworks.studios.journey.jql.transforms.ColumnTransformFn;
+import org.neo4j.helpers.collection.Iterables;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.neo4j.helpers.collection.Iterables.toList;
+
 public class DataQueryResult {
-    private List<List<Tuple>> columns;
+    private List<Iterable<Tuple>> columns;
     private String errors;
 
     public DataQueryResult(int numOfColumns) {
@@ -36,13 +39,17 @@ public class DataQueryResult {
     }
 
     public List<List<Tuple>> data() {
-        return columns;
+        ArrayList<List<Tuple>> result = new ArrayList<>(columns.size());
+        for (Iterable<Tuple> column : columns) {
+            result.add(toList(column));
+        }
+        return result;
     }
 
     @JsonProperty("data")
     public List<List<Object[]>> jsonData() {
         ArrayList<List<Object[]>> result = new ArrayList<>(columns.size());
-        for (List<Tuple> column : columns) {
+        for (Iterable<Tuple> column : columns) {
             List<Object[]> serializableColumn = new ArrayList<>();
             for (Tuple tuple : column) {
                 serializableColumn.add(tuple.serializations());
@@ -54,14 +61,14 @@ public class DataQueryResult {
 
     public void apply(ColumnTransformFn fn) {
         for (int i = 0; i < columns.size(); i++) {
-            List<Tuple> column = columns.get(i);
+            Iterable<Tuple> column = columns.get(i);
             columns.set(i, fn.apply(column));
         }
     }
 
     public void addRows(Tuple[] row) {
         for (int i = 0; i < row.length; i++) {
-            List<Tuple> column = columns.get(i);
+            List<Tuple> column = (List<Tuple>) columns.get(i);
             column.add(row[i]);
         }
     }
@@ -75,4 +82,5 @@ public class DataQueryResult {
         result.errors = e.getClass().getSimpleName() + ": " + e.getMessage();
         return result;
     }
+
 }

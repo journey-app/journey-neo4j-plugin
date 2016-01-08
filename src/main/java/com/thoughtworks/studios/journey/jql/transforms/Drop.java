@@ -19,18 +19,18 @@
 package com.thoughtworks.studios.journey.jql.transforms;
 
 import com.thoughtworks.studios.journey.jql.Tuple;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.neo4j.function.Function;
+import org.neo4j.helpers.collection.Iterables;
 
 public class Drop implements ColumnTransformFn {
     @Override
-    public List<Tuple> apply(List<Tuple> column, String... params) {
-        int index = Integer.parseInt(params[0]);
-        ArrayList<Tuple> result = new ArrayList<>(column.size());
-        for (Tuple tuple : column) {
-            result.add(tuple.drop(index));
-        }
-        return result;
+    public Iterable<Tuple> apply(Iterable<Tuple> column, String... params) {
+        final int index = Integer.parseInt(params[0]);
+        return Iterables.map(new Function<Tuple, Tuple>() {
+            @Override
+            public Tuple apply(Tuple tuple) throws RuntimeException {
+                return tuple.drop(index);
+            }
+        }, column);
     }
 }

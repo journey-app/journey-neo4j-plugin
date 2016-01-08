@@ -20,25 +20,22 @@ package com.thoughtworks.studios.journey.jql.transforms;
 
 import com.thoughtworks.studios.journey.jql.Tuple;
 import com.thoughtworks.studios.journey.jql.values.JQLValue;
+import com.thoughtworks.studios.journey.utils.IterableUtils;
+import org.neo4j.function.Function;
+import org.neo4j.helpers.collection.Iterables;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 
 public class DistinctBy implements ColumnTransformFn {
     @Override
-    public List<Tuple> apply(List<Tuple> column, String... params) {
-        int index = Integer.valueOf(params[0]);
-        HashSet<JQLValue> set = new HashSet<>();
-        ArrayList<Tuple> result = new ArrayList<>();
-        for (Tuple tuple : column) {
-            JQLValue by = tuple.get(index);
-            if(set.contains(by)) {
-                continue;
+    public Iterable<Tuple> apply(Iterable<Tuple> column, String... params) {
+        final int index = Integer.valueOf(params[0]);
+        return IterableUtils.uniqueBy(new Function<Tuple, Object>() {
+            @Override
+            public Object apply(Tuple tuple) throws RuntimeException {
+                return tuple.get(index);
             }
-            set.add(by);
-            result.add(tuple);
-        }
-        return result;
+        }, column);
     }
 }

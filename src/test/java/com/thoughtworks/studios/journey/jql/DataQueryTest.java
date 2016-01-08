@@ -21,6 +21,7 @@ package com.thoughtworks.studios.journey.jql;
 import com.thoughtworks.studios.journey.ModelTestCase;
 import com.thoughtworks.studios.journey.TestHelper;
 import com.thoughtworks.studios.journey.jql.values.JQLValue;
+import com.thoughtworks.studios.journey.utils.IterableUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.neo4j.graphdb.Node;

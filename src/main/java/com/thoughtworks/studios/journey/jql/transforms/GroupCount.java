@@ -26,8 +26,8 @@ import java.util.*;
 
 public class GroupCount implements ColumnTransformFn {
     @Override
-    public List<Tuple> apply(List<Tuple> column, String... params) {
-        Map<Tuple, Integer> counts = new LinkedHashMap<>(column.size());
+    public Iterable<Tuple> apply(Iterable<Tuple> column, String... params) {
+        Map<Tuple, Integer> counts = new LinkedHashMap<>();
         for (Tuple tuple: column) {
             MapUtils.incrementValue(counts, tuple, 1);
         }

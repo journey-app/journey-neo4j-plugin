@@ -30,7 +30,7 @@ public class CollectionUtils {
 
     @SafeVarargs
     public static <T> List<T> list(T... items) {
-        return Arrays.asList(items);
+        return new ArrayList<>(Arrays.asList(items));
     }
 
     public static List listO(Object... items) {

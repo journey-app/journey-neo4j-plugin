@@ -79,6 +79,7 @@ public class DataQuery {
                     result.addRows(row);
                 }
             }
+
             for (ColumnTransformFn transform : select.getColumnTransforms()) {
                 result.apply(transform);
             }

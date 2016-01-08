@@ -19,15 +19,14 @@
 package com.thoughtworks.studios.journey.jql.transforms;
 
 import com.thoughtworks.studios.journey.jql.Tuple;
+import org.neo4j.helpers.collection.Iterables;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 
 public class Distinct implements ColumnTransformFn {
     @Override
-    public List<Tuple> apply(List<Tuple> column, String... params) {
-        LinkedHashSet<Tuple> set = new LinkedHashSet<>(column);
-        return new ArrayList<>(set);
+    public Iterable<Tuple> apply(Iterable<Tuple> column, String... params) {
+        return Iterables.unique(column);
     }
 }
