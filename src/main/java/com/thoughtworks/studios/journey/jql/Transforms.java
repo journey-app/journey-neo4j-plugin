@@ -34,6 +34,7 @@ public class Transforms {
         columnTransforms.put("distinct_by", new DistinctBy());
         columnTransforms.put("flatten", new Flatten());
         columnTransforms.put("compact", new Compact());
+        columnTransforms.put("compact_by", new CompactBy());
         columnTransforms.put("group_count", new GroupCount());
         columnTransforms.put("take", new Take());
         columnTransforms.put("drop", new Drop());

@@ -360,4 +360,10 @@ public class DataQueryTest extends ModelTestCase {
         assertEquals(list(list(t(v("u0")), t(v("u1")), t(v()))), query.execute().data());
     }
 
+    @Test
+    public void testCompactBy() throws IOException{
+        DataQuery query = new DataQuery(app, true);
+        query.select("(user.identifier, journey) |> compact_by:0 |> take:0");
+        assertEquals(list(list(t(v("u0")), t(v("u1")))), query.execute().data());
+    }
 }
