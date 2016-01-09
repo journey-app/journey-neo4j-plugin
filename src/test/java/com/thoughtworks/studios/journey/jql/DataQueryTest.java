@@ -349,8 +349,15 @@ public class DataQueryTest extends ModelTestCase {
         assertEquals(list(list(t(jv(j1)), t(jv(j2)))), query.execute().data());
 
         query.select("journey |> offset:2 |> limit:2");
-
         assertEquals(list(list(t(jv(j3)), t(jv(j4)))), query.execute().data());
+    }
+
+
+    @Test
+    public void testGetUserIdentifier() throws IOException{
+        DataQuery query = new DataQuery(app, true);
+        query.select("user.identifier");
+        assertEquals(list(list(t(v("u0")), t(v("u1")), t(v()))), query.execute().data());
     }
 
 }

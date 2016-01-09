@@ -41,6 +41,11 @@ public abstract class ValueCollector {
         if (expression.equals("user")) {
             return new UserCollector(app);
         }
+
+        if (expression.equals("user.identifier")) {
+            return new UIDCollector(app);
+        }
+
         Matcher traitMatcher = TRAIT_PATTERN.matcher(expression);
         if (traitMatcher.matches()) {
             return new UserTraitCollector(app, traitMatcher.group(1));
@@ -256,6 +261,20 @@ public abstract class ValueCollector {
         public JQLValue values(Node journey, Node event, boolean cross) {
             Journeys journeys = app.journeys();
             return Values.wrapMulti(cross ? journeys.crossActions(journey) : journeys.actions(journey));
+        }
+    }
+
+    private static class UIDCollector extends ValueCollector {
+        private Application app;
+
+        public UIDCollector(Application app) {
+            this.app = app;
+        }
+
+        @Override
+        public JQLValue values(Node journey, Node event, boolean cross) {
+            Node user = app.journeys().user(journey);
+            return Values.wrapSingle(app.users().getIdentifier(user));
         }
     }
 }
