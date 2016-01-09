@@ -48,7 +48,6 @@ public class SuffixTree {
             }
         }, rootNodes);
 
-
         return filter(new Predicate<SuffixTree>() {
             @Override
             public boolean accept(SuffixTree tree) {

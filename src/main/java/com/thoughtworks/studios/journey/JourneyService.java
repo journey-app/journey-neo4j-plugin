@@ -26,9 +26,12 @@ import com.thoughtworks.studios.journey.jql.DataQueryResult;
 import com.thoughtworks.studios.journey.jql.JourneyQuery;
 import com.thoughtworks.studios.journey.models.*;
 import com.thoughtworks.studios.journey.utils.BatchTransaction;
+import com.thoughtworks.studios.journey.utils.GraphDbUtils;
 import com.thoughtworks.studios.journey.utils.JSONUtils;
 import org.apache.commons.lang.StringUtils;
 import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.index.Index;
+import org.neo4j.index.lucene.ValueContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -164,10 +167,9 @@ public class JourneyService {
         writingLock.lock();
         try {
             Application app = new Application(graphDB, ns);
-            Label requestLabel = app.nameSpacedLabel("Request");
             ArrayList<Long> ids = new ArrayList<>();
             try (Transaction ignored = graphDB.beginTx()) {
-                ResourceIterator<Node> nodes = graphDB.findNodes(requestLabel);
+                ResourceIterator<Node> nodes = graphDB.findNodes(app.journeys().getLabel());
                 while (nodes.hasNext()) {
                     Node node = nodes.next();
                     ids.add(node.getId());
@@ -176,9 +178,13 @@ public class JourneyService {
 
             try (BatchTransaction tx = new BatchTransaction(graphDB, 5000)) {
                 for (Long id : ids) {
-                    Node node = graphDB.getNodeById(id);
-                    node.removeLabel(requestLabel);
-                    node.addLabel(app.events().getLabel());
+                    Node journey = graphDB.getNodeById(id);
+                    if(!journey.hasProperty(Journeys.PROP_LENGTH)) {
+                        Integer length = journey.getDegree(RelTypes.BELONGS_TO, Direction.INCOMING);
+                        journey.setProperty(Journeys.PROP_LENGTH, length);
+                        Index<Node> index = GraphDbUtils.legacyIndex(graphDB, app.journeys().getLabel());
+                        index.add(journey, Journeys.PROP_LENGTH, new ValueContext(length).indexNumeric());
+                    }
                     tx.increment();
                 }
             }

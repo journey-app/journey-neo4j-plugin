@@ -41,6 +41,7 @@ public class Journeys implements Models {
     public static final String IDX_PROP_UID = "uid";
     public static final Long CUT_TOLERANT = 2 * 60 * 60 * 1000L; // 2 hours
     public static final String IDX_PROP_ACTION_IDS = "action_ids";
+    public static final String PROP_LENGTH = "length";
     private final Application app;
     private final Map<String, LinkedList<Node>> journeysCache;
     private final ChronologicalChain chainHelper;
@@ -86,7 +87,14 @@ public class Journeys implements Models {
         event.createRelationshipTo(journey, RelTypes.BELONGS_TO);
         legacyIndex().add(journey, IDX_PROP_ACTION_IDS, new ValueContext(action.getId()).indexNumeric());
         chainHelper.insert(journey, event);
+        incrementLength(journey);
         return journey;
+    }
+
+    private void incrementLength(Node journey) {
+        journey.setProperty(PROP_LENGTH, length(journey) + 1);
+        legacyIndex().remove(journey, PROP_LENGTH);
+        legacyIndex().add(journey, PROP_LENGTH, new ValueContext(length(journey)).indexNumeric());
     }
 
     private void expandTimeRange(Node journey, Long eventAt) {
@@ -329,5 +337,9 @@ public class Journeys implements Models {
             labels.addAll(actions(j));
         }
         return labels;
+    }
+
+    public Integer length(Node journey) {
+        return journey.hasProperty(PROP_LENGTH) ? (Integer) journey.getProperty(PROP_LENGTH) : 0;
     }
 }

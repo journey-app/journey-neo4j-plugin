@@ -52,6 +52,14 @@ public class JourneysTest extends ModelTestCase {
     }
 
     @Test
+    public void testLength() {
+        assertEquals(2, journeys.length(j1).intValue());
+        assertEquals(2, journeys.length(j2).intValue());
+        assertEquals(3, journeys.length(j3).intValue());
+        assertEquals(2, journeys.length(j4).intValue());
+    }
+
+    @Test
     public void toHashWithEnoughEventLimit() {
         Map<String, Object> hash = journeys.toHash(j1, 2, 0);
         assertEquals(j1.getId(), hash.get("id"));

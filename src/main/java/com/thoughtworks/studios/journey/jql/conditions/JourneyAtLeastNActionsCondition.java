@@ -20,6 +20,9 @@ package com.thoughtworks.studios.journey.jql.conditions;
 
 import com.thoughtworks.studios.journey.models.Application;
 import com.thoughtworks.studios.journey.jql.QueryCondition;
+import com.thoughtworks.studios.journey.models.Journeys;
+import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.search.Query;
 import org.neo4j.graphdb.Node;
 import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.collection.Iterables;
@@ -34,21 +37,12 @@ public class JourneyAtLeastNActionsCondition extends QueryCondition {
     }
 
     @Override
-    public Iterable<Node> filter(final Application app, final Iterable<Node> journeys) {
-        return Iterables.filter(new Predicate<Node>() {
-            @Override
-            public boolean accept(Node node) {
-                Iterable<Node> events = app.journeys().events(node);
-                Iterator<Node> iterator = events.iterator();
-                for (int i = 0; i < n; i++) {
-                    if (iterator.hasNext()) {
-                        iterator.next();
-                    } else {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }, journeys);
+    public Query luceneQuery(Application app) {
+        return NumericRangeQuery.newIntRange(Journeys.PROP_LENGTH,
+                n,
+                Integer.MAX_VALUE,
+                true,
+                true);
     }
+
 }
