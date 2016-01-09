@@ -342,4 +342,15 @@ public class DataQueryTest extends ModelTestCase {
                 t(v(TestHelper.dateToMillis(2015, 1, 4)), v(1)))), query.execute().data());
     }
 
+    @Test
+    public void testLimitAndOffset() throws IOException{
+        DataQuery query = new DataQuery(app, false);
+        query.select("journey |> limit:2");
+        assertEquals(list(list(t(jv(j1)), t(jv(j2)))), query.execute().data());
+
+        query.select("journey |> offset:2 |> limit:2");
+
+        assertEquals(list(list(t(jv(j3)), t(jv(j4)))), query.execute().data());
+    }
+
 }

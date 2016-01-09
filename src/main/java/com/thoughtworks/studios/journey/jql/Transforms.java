@@ -37,6 +37,8 @@ public class Transforms {
         columnTransforms.put("group_count", new GroupCount());
         columnTransforms.put("take", new Take());
         columnTransforms.put("drop", new Drop());
+        columnTransforms.put("limit", new Limit());
+        columnTransforms.put("offset", new Offset());
         columnTransforms.put("url_query", new Multiplexer(new UrlQuery()));
         columnTransforms.put("url_domain", new Multiplexer(new UrlDomain()));
         columnTransforms.put("time_floor", new Multiplexer(new TimeFloor()));
