@@ -18,26 +18,14 @@
  */
 package com.thoughtworks.studios.journey.jql.conditions;
 
-import com.thoughtworks.studios.journey.models.Application;
-import com.thoughtworks.studios.journey.models.Journeys;
-import com.thoughtworks.studios.journey.jql.QueryCondition;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.Query;
+public interface Value extends Comparable<Value> {
+    Value plus(Value right);
 
-public class JourneyStartsAfterCondition extends QueryCondition {
-    private long after;
+    Value minus(Value right);
 
-    public JourneyStartsAfterCondition(long after) {
-        this.after = after;
-    }
+    Value multiply(Value right);
 
-    @Override
-    public Query luceneQuery(Application app) {
-        return NumericRangeQuery.newLongRange(
-                Journeys.PROP_START_AT,
-                after,
-                Long.MAX_VALUE,
-                true,
-                false);
-    }
+    Value divide(Value right);
+
+    Value reminder(Value right);
 }

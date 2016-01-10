@@ -145,7 +145,7 @@ public class JourneyServiceTest {
         ));
 
         assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
-        String queryJson = "[{\"subject\":\"User\",\"verb\":\"name is\",\"object\":\"u1\"}]";
+        String queryJson = "[\"user.identifier = 'u1'\"]";
         Response response = service.journeys("parsley", queryJson, -1, 0, true, 101);
         assertEquals(200, response.getStatus());
         List<Map> journeys = jsonToListMap((String) response.getEntity());
@@ -170,7 +170,7 @@ public class JourneyServiceTest {
         assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
         assertEquals(200, service.reindex("parsley").getStatus());
 
-        String queryJson = "[{\"subject\":\"User\",\"verb\":\"name is\",\"object\":\"u*\"}]";
+        String queryJson = "[\"user.identifier =~ 'u*'\"]";
         Response response = service.journeys("parsley", queryJson, -1, 0, true, 101);
         assertEquals(200, response.getStatus());
         List<Map> journeys = jsonToListMap((String) response.getEntity());
@@ -189,7 +189,7 @@ public class JourneyServiceTest {
         ));
 
         assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
-        String queryJson = "[{\"subject\":\"User\",\"verb\":\"name is\",\"object\":\"u1\"}]";
+        String queryJson = "[\"user.identifier = 'u1'\"]";
         Response response = service.journeysSummary("parsley", queryJson);
         assertEquals(200, response.getStatus());
         Map<String, Object> summary = (Map<String, Object>) readJson((String) response.getEntity());
@@ -209,7 +209,7 @@ public class JourneyServiceTest {
         ));
 
         assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
-        String queryJson = "[{\"subject\":\"User\",\"verb\":\"name is\",\"object\":\"u1\"}]";
+        String queryJson = "[\"user.identifier = 'u1'\"]";
         Response response = service.journeysActionGraph("parsley", queryJson, 10);
         assertEquals(200, response.getStatus());
         Map<String, Object> graph = (Map<String, Object>) readJson((String) response.getEntity());

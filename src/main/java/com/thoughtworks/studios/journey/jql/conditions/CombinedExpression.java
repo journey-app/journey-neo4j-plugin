@@ -18,30 +18,30 @@
  */
 package com.thoughtworks.studios.journey.jql.conditions;
 
+import com.thoughtworks.studios.journey.jql.DataQueryError;
 import com.thoughtworks.studios.journey.models.Application;
-import com.thoughtworks.studios.journey.jql.QueryCondition;
 import org.neo4j.graphdb.Node;
-import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.collection.Iterables;
 
-public class UserReturnedCondition extends QueryCondition {
-    private final long threshold;
+class CombinedExpression implements Expression {
+    private final ArithmeticOperator arithmeticOperator;
+    private final Expression left;
+    private final Expression right;
 
-    public UserReturnedCondition(long threshold) {
-        this.threshold = threshold;
+    public CombinedExpression(ArithmeticOperator arithmeticOperator, Expression left, Expression right) {
+        this.arithmeticOperator = arithmeticOperator;
+        this.left = left;
+        this.right = right;
     }
 
     @Override
-    public Iterable<Node> filter(final Application app, Iterable<Node> journeys) {
-        return Iterables.filter(new Predicate<Node>() {
-            @Override
-            public boolean accept(Node journey) {
-                Node user = app.journeys().user(journey);
-                if(user == null) {
-                    return false;
-                }
-                return app.users().getLastActiveAt(user) - app.users().getStartActiveAt(user) >= threshold;
-            }
-        }, journeys);
+    public boolean includeField() {
+        return left.includeField() || right.includeField();
+    }
+
+    @Override
+    public Value eval(Application app, Node journey) {
+        Value leftVal = left.eval(app, journey);
+        Value rightVal = right.eval(app, journey);
+        return arithmeticOperator.apply(leftVal, rightVal);
     }
 }

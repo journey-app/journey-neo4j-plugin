@@ -131,7 +131,7 @@ public class DataQueryTest extends ModelTestCase {
         DataQuery query = new DataQuery(app);
         query.select("event |> compact |> count");
         query.stops(list("a0", "a1"));
-        query.conditions(buildConditions(listO("Journey", "starts after", TestHelper.dateToMillis(2015, 1, 1) + 1)));
+        query.conditions(list("start_at > " + (TestHelper.dateToMillis(2015, 1, 1) + 1)));
         assertEquals(list(list(t(v(2))), list(t(v(1)))), query.execute().data());
     }
 
@@ -289,7 +289,7 @@ public class DataQueryTest extends ModelTestCase {
     public void testSelectAction() throws IOException {
         DataQuery query = new DataQuery(app);
         query.select("event.action");
-        query.conditions(buildConditions(listO("User", "name is", "u1")));
+        query.conditions(list("user.identifier = 'u1'"));
         query.stops(list("*", "*", "*"));
         assertEquals(list(list(t(v("a1"))), list(t(v("a2"))), list(t(v("a0")))), query.execute().data());
     }
@@ -298,7 +298,7 @@ public class DataQueryTest extends ModelTestCase {
     public void testSelectJourneyActions() throws IOException {
         DataQuery query = new DataQuery(app);
         query.select("journey.actions");
-        query.conditions(buildConditions(listO("User", "name is", "u1")));
+        query.conditions(list("user.identifier = 'u1'"));
         query.stops(list("*"));
         query.crossJourney(false);
         assertEquals(list(list(t(v("a1", "a2")), t(v("a0", "a1")))), query.execute().data());
@@ -310,7 +310,7 @@ public class DataQueryTest extends ModelTestCase {
     public void testSelectEventTimeStamp() throws IOException {
         DataQuery query = new DataQuery(app);
         query.select("event.timestamp");
-        query.conditions(buildConditions(listO("User", "name is", "u1")));
+        query.conditions(list("user.identifier = 'u1'"));
         query.stops(list("a0"));
         assertEquals(list(list(t(v(TestHelper.dateToMillis(2015, 1, 4))))), query.execute().data());
     }
@@ -318,7 +318,8 @@ public class DataQueryTest extends ModelTestCase {
     @Test
     public void testTimeCeilingFunction() throws IOException {
         DataQuery query = new DataQuery(app);
-        query.conditions(buildConditions(listO("User", "name is", "u1")));
+
+        query.conditions(list("user.identifier = 'u1'"));
         query.stops(list("a2"));
 
         query.select("event.timestamp |> time_floor:day");

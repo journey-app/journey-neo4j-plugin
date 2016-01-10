@@ -28,7 +28,7 @@ import java.util.*;
 public class DataQuery {
     private final Application app;
     private boolean crossJourney;
-    private List<Map> conditions = new ArrayList<>();
+    private List<String> conditions = new ArrayList<>();
     private List<StoppingCondition> stops;
     private Select select;
 
@@ -105,7 +105,7 @@ public class DataQuery {
         }
     }
 
-    public void conditions(List<Map> conditions) {
+    public void conditions(List<String> conditions) {
         this.conditions = conditions;
     }
 

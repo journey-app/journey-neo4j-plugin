@@ -388,7 +388,7 @@ public class JourneyService {
                              @QueryParam("desc") @DefaultValue("true") boolean descOrder,
                              @QueryParam("events_limit") @DefaultValue("50") int eventsLimit) throws IOException {
         Application app = new Application(graphDB, ns);
-        List<Map> conditions = parseQueryCondition(queryJson);
+        List<String> conditions = parseQueryCondition(queryJson);
         List<Map> result = new ArrayList<>();
 
         try (Transaction ignored = graphDB.beginTx()) {
@@ -413,7 +413,7 @@ public class JourneyService {
     public Response journeysSummary(@PathParam("ns") String ns,
                                     @QueryParam("query") @DefaultValue("") String queryJson) throws IOException {
         Application app = new Application(graphDB, ns);
-        List<Map> conditions = parseQueryCondition(queryJson);
+        List<String> conditions = parseQueryCondition(queryJson);
         int journeyCount = 0;
         Set<Node> users = new HashSet<>();
 
@@ -439,7 +439,7 @@ public class JourneyService {
                                         @QueryParam("query") @DefaultValue("") String queryJson,
                                         @QueryParam("steps") @DefaultValue("10") int steps) throws IOException {
         Application app = new Application(graphDB, ns);
-        List<Map> conditions = parseQueryCondition(queryJson);
+        List<String> conditions = parseQueryCondition(queryJson);
         ActionsGraph graph = new ActionsGraph(app, steps);
         try (Transaction ignored = graphDB.beginTx()) {
             JourneyQuery query = JourneyQuery.Builder.query(app).
@@ -461,11 +461,10 @@ public class JourneyService {
                                           @QueryParam("label") String startActionLabel,
                                           @QueryParam("steps") @DefaultValue("4") int steps) throws IOException {
         Application app = new Application(graphDB, ns);
-        List<Map> conditions = parseQueryCondition(queryJson);
         ActionsGraph graph = new ActionsGraph(app, steps);
         try (Transaction ignored = graphDB.beginTx()) {
             JourneyQuery query = JourneyQuery.Builder.query(app).
-                    conditions(conditions).
+                    conditions(parseQueryCondition(queryJson)).
                     desc().
                     build();
             for (Node journey : query.uniqueJourneys()) {
@@ -519,7 +518,7 @@ public class JourneyService {
                                    @QueryParam("convert_stop") String convertStopExpression) throws IOException {
 
         Application app = new Application(graphDB, ns);
-        List<Map> baseConditions = parseQueryCondition(baseQueryJson);
+        List<String> baseConditions = parseQueryCondition(baseQueryJson);
 
         try (Transaction ignored = graphDB.beginTx()) {
             StoppingCondition baseStop = StoppingCondition.eval(app, baseStopExpression);
@@ -696,8 +695,8 @@ public class JourneyService {
         }
     }
 
-    private List<Map> parseQueryCondition(String conditionJSON) throws IOException {
-        return conditionJSON.length() == 0 ? new ArrayList<Map>() : jsonToListMap(conditionJSON);
+    private List<String> parseQueryCondition(String conditionJSON) throws IOException {
+        return conditionJSON.length() == 0 ? new ArrayList<String>() : jsonToListString(conditionJSON);
     }
 
 

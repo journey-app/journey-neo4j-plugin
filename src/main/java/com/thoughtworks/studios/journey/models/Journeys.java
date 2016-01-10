@@ -36,12 +36,14 @@ import static org.neo4j.helpers.collection.Iterables.*;
 
 public class Journeys implements Models {
     public static final String PROP_START_AT = "start_at";
-    private static final String PROP_FINISH_AT = "finish_at";
+    public static final String PROP_FINISH_AT = "finish_at";
     public static final String PROP_SESSION_ID = "session_id";
     public static final String IDX_PROP_UID = "uid";
     public static final Long CUT_TOLERANT = 2 * 60 * 60 * 1000L; // 2 hours
     public static final String IDX_PROP_ACTION_IDS = "action_ids";
     public static final String PROP_LENGTH = "length";
+    public static final Set<String> INDEXED_FIELDS = new HashSet<>(3);
+
     private final Application app;
     private final Map<String, LinkedList<Node>> journeysCache;
     private final ChronologicalChain chainHelper;

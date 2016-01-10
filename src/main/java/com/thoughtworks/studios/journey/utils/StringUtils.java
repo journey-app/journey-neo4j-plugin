@@ -16,25 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.thoughtworks.studios.journey.jql.conditions;
+package com.thoughtworks.studios.journey.utils;
 
-import com.thoughtworks.studios.journey.models.Application;
-import com.thoughtworks.studios.journey.models.Journeys;
-import com.thoughtworks.studios.journey.jql.QueryCondition;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.WildcardQuery;
-
-public class UserNameIsCondition extends QueryCondition {
-
-    private String object;
-
-    public UserNameIsCondition(String object) {
-        this.object = object;
-    }
-
-    @Override
-    public Query luceneQuery(Application app) {
-        return new WildcardQuery(new Term(Journeys.IDX_PROP_UID, object));
+public class StringUtils {
+    public static String unquote(String s, String quote) {
+        if (s != null && (s.startsWith(quote) && s.endsWith(quote))) {
+            s = s.substring(1, s.length() - 1);
+        }
+        return s;
     }
 }

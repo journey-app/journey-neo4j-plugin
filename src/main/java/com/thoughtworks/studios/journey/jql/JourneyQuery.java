@@ -18,12 +18,13 @@
  */
 package com.thoughtworks.studios.journey.jql;
 
-import com.thoughtworks.studios.journey.jql.conditions.JourneyStartsBeforeCondition;
+import com.thoughtworks.studios.journey.jql.conditions.JourneyCondition;
 import com.thoughtworks.studios.journey.models.Application;
 import com.thoughtworks.studios.journey.models.Journeys;
 import com.thoughtworks.studios.journey.utils.MatchNothingLuceneQuery;
 import org.apache.lucene.search.*;
 import org.neo4j.graphdb.Node;
+import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.helpers.collection.LimitingIterable;
 import org.neo4j.index.lucene.QueryContext;
@@ -35,14 +36,14 @@ import static org.neo4j.helpers.collection.Iterables.skip;
 public class JourneyQuery {
     private Application app;
     private boolean descOrder;
-    private List<QueryCondition> conditions;
+    private List<JourneyCondition> conditions;
     private int limit;
     private int offset;
 
     public static class Builder {
         private Application app;
         private boolean descOrder;
-        private List<QueryCondition> conditions = new ArrayList<>();
+        private List<JourneyCondition> conditions = new ArrayList<>();
         private int limit = -1;
         private int offset = 0;
 
@@ -52,23 +53,6 @@ public class JourneyQuery {
 
         private Builder(Application app) {
             this.app = app;
-        }
-
-        public Builder conditions(List<Map> conditions) {
-            for (Map condition : conditions) {
-                QueryCondition parsedCondition = QueryCondition.parseCondition(
-                        (String) condition.get("subject"),
-                        (String) condition.get("verb"),
-                        condition.get("object"));
-                condition(parsedCondition);
-            }
-
-            return this;
-        }
-
-        public Builder condition(QueryCondition condition) {
-            this.conditions.add(condition);
-            return this;
         }
 
         public Builder desc() {
@@ -94,12 +78,19 @@ public class JourneyQuery {
             this.offset = offset;
             return this;
         }
+
+        public Builder conditions(List<String> conditions) {
+            for (String condition : conditions) {
+                this.conditions.add(JourneyCondition.parse(condition));
+            }
+            return this;
+        }
     }
 
-    private JourneyQuery(Application app, List<QueryCondition> conditions, boolean descOrder, int limit, int offset) {
+    private JourneyQuery(Application app, List<JourneyCondition> conditions, boolean descOrder, int limit, int offset) {
         this.app = app;
-        this.descOrder = descOrder;
         this.conditions = conditions;
+        this.descOrder = descOrder;
         this.limit = limit;
         this.offset = offset;
     }
@@ -129,8 +120,17 @@ public class JourneyQuery {
 
 
     private Iterable<Node> filter(Iterable<Node> journeys) {
-        for (QueryCondition condition : conditions) {
-            journeys = condition.filter(app, journeys);
+        for (final JourneyCondition condition : conditions) {
+            if (condition.matchingIndexes()) {
+                continue;
+            }
+
+            journeys = Iterables.filter(new Predicate<Node>() {
+                @Override
+                public boolean accept(Node journey) {
+                    return condition.evaluate(app, journey);
+                }
+            }, journeys);
         }
         return journeys;
     }
@@ -138,17 +138,16 @@ public class JourneyQuery {
     private Iterable<Node> query() {
         BooleanQuery luceneQuery = new BooleanQuery();
         luceneQuery.add(new MatchAllDocsQuery(), BooleanClause.Occur.MUST);
-        for (QueryCondition condition : conditions) {
-            Query query = condition.luceneQuery(app);
-            if (query instanceof MatchNothingLuceneQuery) {
-                return Iterables.empty();
-            }
-            if (query != null) {
-                luceneQuery.add(query, BooleanClause.Occur.MUST);
+        for (JourneyCondition condition : conditions) {
+            if (condition.matchingIndexes()) {
+                Query q = condition.indexQuery(app);
+                if (q instanceof MatchNothingLuceneQuery) {
+                    return Iterables.empty();
+                } else {
+                    luceneQuery.add(q, BooleanClause.Occur.MUST);
+                }
             }
         }
-        luceneQuery.add(new JourneyStartsBeforeCondition(System.currentTimeMillis()).luceneQuery(app), BooleanClause.Occur.MUST);
-
         Sort sorting = new Sort(new SortField(Journeys.PROP_START_AT, SortField.LONG, descOrder));
         QueryContext queryContext = new QueryContext(luceneQuery).sort(sorting);
         return app.journeys().query(queryContext);

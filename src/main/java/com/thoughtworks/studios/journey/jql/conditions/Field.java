@@ -18,33 +18,40 @@
  */
 package com.thoughtworks.studios.journey.jql.conditions;
 
+import com.thoughtworks.studios.journey.jql.DataQueryError;
 import com.thoughtworks.studios.journey.models.Application;
-import com.thoughtworks.studios.journey.jql.QueryCondition;
+import com.thoughtworks.studios.journey.utils.StringUtils;
 import org.neo4j.graphdb.Node;
-import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.collection.Iterables;
 
-public class JourneyFirstActionIsCondition extends QueryCondition {
-    private String actionLabel;
+class Field implements Expression {
+    private final String fullName;
 
-    public JourneyFirstActionIsCondition(String actionLabel) {
-        this.actionLabel = actionLabel;
+
+    public Field(String fieldName, boolean user) {
+        fieldName = StringUtils.unquote(fieldName, "`");
+        this.fullName = user ? "user." + fieldName : fieldName;
+    }
+
+    public IndexField indexField() {
+        return IndexField.get(fullName);
     }
 
     @Override
-    public Iterable<Node> filter(final Application app, Iterable<Node> journeys) {
-        final Node expectedAction = app.actions().findByActionLabel(this.actionLabel);
-        return Iterables.filter(new Predicate<Node>() {
-            @Override
-            public boolean accept(Node journey) {
-                Iterable<Node> events = app.journeys().events(journey);
-                Node firstEvent = Iterables.first(events);
-                if(firstEvent == null) {
-                    return false;
-                }
-                Node firstAction = app.events().action(firstEvent);
-                return firstAction.equals(expectedAction);
-            }
-        }, journeys);
+    public boolean includeField() {
+        return true;
+    }
+
+    @Override
+    public Value eval(Application app, Node journey) {
+        ModelAccessor accessor = ModelAccessor.forField(fullName);
+        if (accessor != null) {
+            return accessor.get(app, journey);
+        }
+
+        throw new DataQueryError("Field " + fullName + " is not valid");
+    }
+
+    public boolean matchIndex() {
+        return indexField() != null;
     }
 }
