@@ -21,7 +21,6 @@ package com.thoughtworks.studios.journey.jql;
 import com.thoughtworks.studios.journey.jql.conditions.JourneyCondition;
 import com.thoughtworks.studios.journey.models.Application;
 import com.thoughtworks.studios.journey.models.Journeys;
-import com.thoughtworks.studios.journey.utils.MatchNothingLuceneQuery;
 import org.apache.lucene.search.*;
 import org.neo4j.graphdb.Node;
 import org.neo4j.helpers.Predicate;
@@ -29,7 +28,10 @@ import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.helpers.collection.LimitingIterable;
 import org.neo4j.index.lucene.QueryContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.neo4j.helpers.collection.Iterables.skip;
 
@@ -114,11 +116,6 @@ public class JourneyQuery {
         return result;
     }
 
-    public int uniqueCount() {
-        return uniqueJourneys().size();
-    }
-
-
     private Iterable<Node> filter(Iterable<Node> journeys) {
         for (final JourneyCondition condition : conditions) {
             if (condition.matchingIndexes()) {
@@ -141,11 +138,7 @@ public class JourneyQuery {
         for (JourneyCondition condition : conditions) {
             if (condition.matchingIndexes()) {
                 Query q = condition.indexQuery(app);
-                if (q instanceof MatchNothingLuceneQuery) {
-                    return Iterables.empty();
-                } else {
-                    luceneQuery.add(q, BooleanClause.Occur.MUST);
-                }
+                luceneQuery.add(q, BooleanClause.Occur.MUST);
             }
         }
         Sort sorting = new Sort(new SortField(Journeys.PROP_START_AT, SortField.LONG, descOrder));

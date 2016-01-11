@@ -19,6 +19,8 @@
 package com.thoughtworks.studios.journey.jql.conditions;
 
 import com.thoughtworks.studios.journey.jql.DataQueryError;
+import com.thoughtworks.studios.journey.utils.LuceneUtils;
+import com.thoughtworks.studios.journey.utils.StringUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
@@ -205,14 +207,12 @@ enum RelationOperator {
     NOT_EQ {
         @Override
         public Query generateIndexQuery(IndexField indexField, Value value) {
-            BooleanQuery bq = new BooleanQuery();
-            bq.add(EQ.generateIndexQuery(indexField, value), BooleanClause.Occur.MUST_NOT);
-            return bq;
+            return LuceneUtils.negate(EQ.generateIndexQuery(indexField, value));
         }
 
         @Override
         public boolean apply(Value left, Value right) {
-            return false;
+            return !EQ.apply(left, right);
         }
     },
 
@@ -226,26 +226,26 @@ enum RelationOperator {
             }
 
             throw new DataQueryError("operator is not compatible with index type");
-
         }
 
         @Override
         public boolean apply(Value left, Value right) {
-            return false;
+            if(!(left instanceof StringValue) || !(right instanceof StringValue)) {
+                throw new DataQueryError("matching operator can only apply to string type");
+            }
+            return StringUtils.wildcardMatch(((StringValue) left).asString(), ((StringValue) right).asString());
         }
     },
 
     NOT_MATCH {
         @Override
         public Query generateIndexQuery(IndexField indexField, Value value) {
-            BooleanQuery bq = new BooleanQuery();
-            bq.add(MATCH.generateIndexQuery(indexField, value), BooleanClause.Occur.MUST_NOT);
-            return bq;
+            return LuceneUtils.negate(MATCH.generateIndexQuery(indexField, value));
         }
 
         @Override
         public boolean apply(Value left, Value right) {
-            return false;
+            return !MATCH.apply(left, right);
         }
     },
 
@@ -257,7 +257,7 @@ enum RelationOperator {
 
         @Override
         public boolean apply(Value left, Value right) {
-            throw new NotImplementedException("Currently has only supported when hitting an index (such as actions includes 'a0'.");
+            throw new NotImplementedException("Currently has only supported when hitting an index (such as actions includes 'an action label'.");
         }
     };
 

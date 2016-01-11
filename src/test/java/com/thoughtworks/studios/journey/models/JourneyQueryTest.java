@@ -64,6 +64,34 @@ public class JourneyQueryTest extends ModelTestCase {
     }
 
     @Test
+    public void testNotEqual() {
+        assertIterableEquals(list(j1, j3), query("user.identifier <> 'u1'").journeys());
+        assertIterableEquals(list(j1, j3), query("user.identifier != 'u1'").journeys());
+    }
+
+    @Test
+    public void testFirstActionEqual() {
+        assertIterableEquals(list(j1, j4), query("first_action = 'a0'").journeys());
+        assertIterableEquals(list(j3), query("first_action == 'a2'").journeys());
+        assertIterableEquals(list(j2, j3), query("first_action <> 'a0'").journeys());
+    }
+
+    @Test
+    public void testUserIdMatch() {
+        assertIterableEquals(list(j1, j2, j4), query("user.identifier =~ 'u*'").journeys());
+        assertIterableEquals(list(j3), query("user.identifier !~ 'u*'").journeys());
+    }
+
+    @Test
+    public void testFirstActionMatch() {
+        assertIterableEquals(list(j1, j2, j3, j4), query("first_action =~ 'a*'").journeys());
+        assertIterableEquals(list(j2), query("first_action =~ '*1'").journeys());
+        assertIterableEquals(list(), query("first_action !~ 'a*'").journeys());
+        assertIterableEquals(list(j1, j3, j4), query("first_action !~ '*1'").journeys());
+    }
+
+
+    @Test
     public void testQueryJourneyWithStartBeforeDate() {
         assertIterableEquals(list(j1, j2), query("start_at < " + dateToMillis(2015, 1, 3)).journeys());
     }
@@ -162,7 +190,7 @@ public class JourneyQueryTest extends ModelTestCase {
     }
 
     @Test
-    public void testQoutedFieldName() {
+    public void testQuotedFieldName() {
         assertIterableEquals(list(j1, j2), query("`actions` includes 'a1'").uniqueJourneys());
     }
 

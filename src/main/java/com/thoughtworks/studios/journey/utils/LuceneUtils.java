@@ -18,11 +18,16 @@
  */
 package com.thoughtworks.studios.journey.utils;
 
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
-public class MatchNothingLuceneQuery extends Query {
-    @Override
-    public String toString(String field) {
-        return ":matching-nothing";
+public class LuceneUtils {
+    public static Query negate(Query query) {
+        BooleanQuery bq = new BooleanQuery();
+        bq.add(new MatchAllDocsQuery(), BooleanClause.Occur.MUST);
+        bq.add(query, BooleanClause.Occur.MUST_NOT);
+        return bq;
     }
 }
