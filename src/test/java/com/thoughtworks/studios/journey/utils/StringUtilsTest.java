@@ -52,6 +52,10 @@ public class StringUtilsTest {
         assertTrue(wildcardMatch("prefixed-text", "prefixed*"));
         assertFalse(wildcardMatch("prefix-text", "prefixed*"));
 
+        // empty pattern
+        assertFalse(wildcardMatch("text", ""));
+        assertTrue(wildcardMatch("", ""));
+
         // suffixed
         assertTrue(wildcardMatch("text-s", "*s"));
         assertFalse(wildcardMatch("text-st", "*s"));
