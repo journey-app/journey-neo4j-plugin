@@ -53,8 +53,8 @@ public class StringUtilsTest {
         assertFalse(wildcardMatch("prefix-text", "prefixed*"));
 
         // suffixed
-        assertTrue(wildcardMatch("text-suffixed", "*suffixed"));
-        assertFalse(wildcardMatch("text-suffixed-not", "*suffixed"));
+        assertTrue(wildcardMatch("text-s", "*s"));
+        assertFalse(wildcardMatch("text-st", "*s"));
 
 
         // '?' replacement

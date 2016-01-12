@@ -18,6 +18,12 @@
  */
 package com.thoughtworks.studios.journey.utils;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import dk.brics.automaton.Automaton;
+import dk.brics.automaton.RunAutomaton;
+import dk.brics.automaton.State;
+import dk.brics.automaton.Transition;
+
 public class StringUtils {
 
     public static final char WILDCARD_STRING = '*';
@@ -30,39 +36,34 @@ public class StringUtils {
         return s;
     }
 
-    //todo: DFA based algorithm should be better solution O(n+m) instead of current worst case O(m*n)
+    private static ConcurrentLinkedHashMap<String, RunAutomaton> dfaCaches = new ConcurrentLinkedHashMap.Builder<String, RunAutomaton>()
+            .maximumWeightedCapacity(200).build();
+
     public static boolean wildcardMatch(String text, String pattern) {
-        if (pattern.indexOf(WILDCARD_STRING) == -1 && pattern.indexOf('?') == -1) {
-            return text.equals(pattern);
+        return compileToAutomaton(pattern).run(text);
+    }
+
+    private static RunAutomaton compileToAutomaton(String pattern) {
+        if (dfaCaches.containsKey(pattern)) {
+            return dfaCaches.get(pattern);
         }
 
-        if (pattern.indexOf(WILDCARD_CHAR) == -1 && pattern.indexOf('*') == pattern.length() - 1) {
-            return text.startsWith(pattern.substring(0, pattern.length() - 1));
-        }
-
-        int i = 0;
-        int j = 0;
-        int star = -1;
-        int mark = -1;
-        while (i < text.length()) {
-            if (j < pattern.length()
-                    && (pattern.charAt(j) == WILDCARD_CHAR || pattern.charAt(j) == text.charAt(i))) {
-                i++;
-                j++;
-            } else if (j < pattern.length() && pattern.charAt(j) == WILDCARD_STRING) {
-                star = j;
-                j++;
-                mark = i;
-            } else if (star != -1) {
-                j = star + 1;
-                i = ++mark;
-            } else {
-                return false;
+        Automaton automaton = Automaton.makeEmptyString();
+        for (int i = 0; i < pattern.length(); i++) {
+            char p = pattern.charAt(i);
+            switch (p) {
+                case WILDCARD_STRING:
+                    automaton = automaton.concatenate(Automaton.makeAnyString());
+                    break;
+                case WILDCARD_CHAR:
+                    automaton = automaton.concatenate(Automaton.makeAnyChar());
+                    break;
+                default:
+                    automaton = automaton.concatenate(Automaton.makeChar(p));
             }
         }
-        while (j < pattern.length() && pattern.charAt(j) == WILDCARD_STRING) {
-            j++;
-        }
-        return j == pattern.length();
+        RunAutomaton run = new RunAutomaton(automaton);
+        dfaCaches.put(pattern, run);
+        return run;
     }
 }
