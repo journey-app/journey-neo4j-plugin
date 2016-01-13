@@ -55,6 +55,7 @@ public class JourneyQuery {
 
         private Builder(Application app) {
             this.app = app;
+            this.conditions.add(JourneyCondition.parse("start_at <= " + System.currentTimeMillis()));
         }
 
         public Builder desc() {
@@ -152,5 +153,4 @@ public class JourneyQuery {
         }
         return new LimitingIterable<>(skip(this.offset, journeys), this.limit);
     }
-
 }

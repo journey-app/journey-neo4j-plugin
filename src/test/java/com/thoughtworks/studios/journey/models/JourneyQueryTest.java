@@ -194,6 +194,12 @@ public class JourneyQueryTest extends ModelTestCase {
         assertIterableEquals(list(j1, j2), query("`actions` includes 'a1'").uniqueJourneys());
     }
 
+    @Test
+    public void testShouldIgnoreJourneyFromFuture() {
+        setupJourney(iterable("a0", "a1"), dateToMillis(3000, 1, 4), 100L, "u1", "s1");
+        assertIterableEquals(list(j1, j2, j3, j4), query().journeys());
+    }
+
     private JourneyQuery query(String... conditions) {
         return builder().conditions(Arrays.asList(conditions)).build();
     }
