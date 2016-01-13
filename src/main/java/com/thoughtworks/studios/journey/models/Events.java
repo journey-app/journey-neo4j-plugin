@@ -41,6 +41,7 @@ public class Events implements Models {
     private static final String PROP_CLIENT_IP = "client_ip";
     private static final String PROP_STATUS_CODE = "status_code";
     private static final String PROP_REFERRER = "referrer";
+    public static final long ONE_DAY = 24 * 3600 * 1000L;
 
     private Application app = null;
 
@@ -78,6 +79,12 @@ public class Events implements Models {
      */
     public Node add(Map<String, Object> eventAttrs) {
         String digest = (String) eventAttrs.get("digest");
+        long start_at = ((Number) eventAttrs.get("start_at")).longValue();
+
+        if(start_at > System.currentTimeMillis() + ONE_DAY) {
+            return null;
+        }
+
         if (eventExists(digest)) {
             return null;
         }

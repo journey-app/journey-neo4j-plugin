@@ -157,5 +157,8 @@ public class EventsTest extends ModelTestCase {
         assertEquals(set(), events.values(event, "k1"));
     }
 
-
+    @Test
+    public void shouldSkipEventWithUnreasonableTime() {
+        assertNull(events.add(createEventAttributes("s1", "a0", dateToMillis(3000, 1, 4))));
+    }
 }
