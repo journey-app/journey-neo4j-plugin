@@ -30,6 +30,8 @@ import java.util.Arrays;
 import static com.thoughtworks.studios.journey.TestHelper.assertIterableEquals;
 import static com.thoughtworks.studios.journey.TestHelper.dateToMillis;
 import static com.thoughtworks.studios.journey.utils.CollectionUtils.list;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
 import static org.neo4j.helpers.collection.Iterables.iterable;
 
 public class JourneyQueryTest extends ModelTestCase {
@@ -157,6 +159,7 @@ public class JourneyQueryTest extends ModelTestCase {
     public void queryJourneyIncludeCertainAction() {
         assertIterableEquals(list(j1, j2, j4), query("actions includes 'a1'").journeys());
         assertIterableEquals(list(j2, j3), query("actions includes 'a2'").journeys());
+        assertIterableEquals(list(j2), query("actions includes 'a1'", "actions includes 'a2'").journeys());
     }
 
     @Test(expected= DataQueryError.class)
@@ -192,6 +195,12 @@ public class JourneyQueryTest extends ModelTestCase {
     @Test
     public void testQuotedFieldName() {
         assertIterableEquals(list(j1, j2), query("`actions` includes 'a1'").uniqueJourneys());
+    }
+
+    @Test
+    public void evalConditions() {
+        assertFalse(query("user.identifier = 'u1'").evalConditions(j1));
+        assertTrue(query("user.identifier = 'u1'").evalConditions(j2));
     }
 
     private JourneyQuery query(String... conditions) {

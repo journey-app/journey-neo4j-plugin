@@ -50,6 +50,11 @@ public class DataQueryTest extends ModelTestCase {
         j2 = setupJourney(iterable("a1", "a2"), TestHelper.dateToMillis(2015, 1, 2), 100L, "u1", "s1");
         j3 = setupJourney(iterable("a2", "a3", "a0"), TestHelper.dateToMillis(2015, 1, 3), 100L, null, "s2");
         j4 = setupJourney(iterable("a0", "a1"), TestHelper.dateToMillis(2015, 1, 4), 100L, "u1", "s1");
+
+        j1.setProperty("_debug_name", "j1");
+        j2.setProperty("_debug_name", "j2");
+        j3.setProperty("_debug_name", "j3");
+        j4.setProperty("_debug_name", "j4");
         u0 = users.findByIdentifier("u0");
         u1 = users.findByIdentifier("u1");
         anonymous = users.findByAnonymousId("s2");
@@ -366,7 +371,7 @@ public class DataQueryTest extends ModelTestCase {
     @Test
     public void testMultipleStopConditions() throws IOException {
         DataQuery query = new DataQuery(app, true);
-        query.select("event |> count");
+        query.select("event |> compact |> count");
         query.addStop(stop("*", list("user.identifier = 'u1'"), true))
                 .addStop(stop("a0", list("actions includes 'a1'")));
         assertEquals(list(list(t(v(1))), list(t(v(1)))), query.execute().data());

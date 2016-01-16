@@ -42,6 +42,7 @@ public class JourneyQuery {
     private int limit;
     private int offset;
 
+
     public static class Builder {
         private Application app;
         private boolean descOrder;
@@ -155,5 +156,14 @@ public class JourneyQuery {
             return skip(this.offset, journeys);
         }
         return new LimitingIterable<>(skip(this.offset, journeys), this.limit);
+    }
+
+    public boolean evalConditions(Node journey) {
+        for (JourneyCondition condition : conditions) {
+            if(!condition.evaluate(app, journey)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

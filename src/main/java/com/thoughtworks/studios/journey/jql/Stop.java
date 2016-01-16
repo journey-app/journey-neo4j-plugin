@@ -62,6 +62,12 @@ public class Stop {
         iterator.markRewindPoint();
         while (iterator.hasNext()) {
             Node event = iterator.next();
+            Node journey = app.events().journeyOf(event);
+            if (!query.evalConditions(journey)) {
+                iterator.forward();
+                continue;
+            }
+
             if (match(event)) {
                 matchedEvent = event;
                 matched = true;

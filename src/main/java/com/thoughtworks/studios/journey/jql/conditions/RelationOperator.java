@@ -21,9 +21,11 @@ package com.thoughtworks.studios.journey.jql.conditions;
 import com.thoughtworks.studios.journey.jql.DataQueryError;
 import com.thoughtworks.studios.journey.utils.LuceneUtils;
 import com.thoughtworks.studios.journey.utils.StringUtils;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.WildcardQuery;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -230,7 +232,7 @@ enum RelationOperator {
 
         @Override
         public boolean apply(Value left, Value right) {
-            if(!(left instanceof StringValue) || !(right instanceof StringValue)) {
+            if (!(left instanceof StringValue) || !(right instanceof StringValue)) {
                 throw new DataQueryError("matching operator can only apply to string type");
             }
             return StringUtils.wildcardMatch(((StringValue) left).asString(), ((StringValue) right).asString());
@@ -257,7 +259,11 @@ enum RelationOperator {
 
         @Override
         public boolean apply(Value left, Value right) {
-            throw new NotImplementedException("Currently has only supported when hitting an index (such as actions includes 'an action label'.");
+            if (!(left instanceof SetValue && right instanceof StringValue)) {
+                throw new DataQueryError("includes operator can only apply to set and string type");
+            }
+
+            return ((SetValue) left).includes(((StringValue) right).asString());
         }
     };
 

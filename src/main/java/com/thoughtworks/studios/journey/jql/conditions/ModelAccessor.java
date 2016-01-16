@@ -53,8 +53,7 @@ public enum ModelAccessor {
     FIRST_ACTION {
         @Override
         public Value get(Application app, Node journey) {
-            Iterable<Node> events = app.journeys().events(journey);
-            Node firstEvent = Iterables.first(events);
+            Node firstEvent = app.journeys().firstEvent(journey);
             if (firstEvent == null) {
                 return new StringValue("");
             }
@@ -82,6 +81,13 @@ public enum ModelAccessor {
         public Value get(Application app, Node journey) {
             return new IntValue(app.journeys().length(journey));
         }
+    },
+
+    ACTIONS {
+        @Override
+        public Value get(Application app, Node journey) {
+            return new SetValue(app.journeys().actions(journey));
+        }
     };
 
 
@@ -95,6 +101,7 @@ public enum ModelAccessor {
         registry.put("start_at", START_AT);
         registry.put("finish_at", FINISH_AT);
         registry.put("length", LENGTH);
+        registry.put("actions", ACTIONS);
     }
 
     public static ModelAccessor forField(String field) {

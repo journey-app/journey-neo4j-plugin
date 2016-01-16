@@ -18,29 +18,20 @@
  */
 package com.thoughtworks.studios.journey.jql.conditions;
 
-import com.thoughtworks.studios.journey.models.Application;
-import com.thoughtworks.studios.journey.utils.StringUtils;
-import org.neo4j.graphdb.Node;
+import java.util.Set;
 
-public class StringValue extends BaseValue implements Expression, Value {
-    private String val;
+public class SetValue extends BaseValue implements Value {
+    private Set<String> set;
 
-    public StringValue(String val) {
-        this.val = StringUtils.unquote(val, "'");
+    public SetValue(Set<String> set) {
+        this.set = set;
     }
 
     @Override
-    public boolean includeField() {
-        return false;
-    }
-
-    @Override
-    public Value eval(Application app, Node journey) {
-        return this;
-    }
-
-    public String asString() {
-        return val;
+    public String toString() {
+        return "SetValue{" +
+                "set=" + set +
+                '}';
     }
 
     @Override
@@ -48,14 +39,18 @@ public class StringValue extends BaseValue implements Expression, Value {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        StringValue that = (StringValue) o;
+        SetValue setValue = (SetValue) o;
 
-        return val.equals(that.val);
+        return set.equals(setValue.set);
 
     }
 
     @Override
     public int hashCode() {
-        return val.hashCode();
+        return set.hashCode();
+    }
+
+    public boolean includes(String s) {
+        return set.contains(s);
     }
 }

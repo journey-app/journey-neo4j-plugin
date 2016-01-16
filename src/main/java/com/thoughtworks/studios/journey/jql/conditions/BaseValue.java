@@ -18,44 +18,37 @@
  */
 package com.thoughtworks.studios.journey.jql.conditions;
 
-import com.thoughtworks.studios.journey.models.Application;
-import com.thoughtworks.studios.journey.utils.StringUtils;
-import org.neo4j.graphdb.Node;
+import com.thoughtworks.studios.journey.jql.DataQueryError;
 
-public class StringValue extends BaseValue implements Expression, Value {
-    private String val;
-
-    public StringValue(String val) {
-        this.val = StringUtils.unquote(val, "'");
+public class BaseValue implements Value {
+    @Override
+    public Value plus(Value right) {
+        throw new DataQueryError("'+' operator only be applied to numeric value");
     }
 
     @Override
-    public boolean includeField() {
-        return false;
+    public Value minus(Value right) {
+        throw new DataQueryError("'-' operator only be applied to numeric value");
     }
 
     @Override
-    public Value eval(Application app, Node journey) {
-        return this;
-    }
-
-    public String asString() {
-        return val;
+    public Value multiply(Value right) {
+        throw new DataQueryError("'*' operator only be applied to numeric value");
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        StringValue that = (StringValue) o;
-
-        return val.equals(that.val);
-
+    public Value divide(Value right) {
+        throw new DataQueryError("'/' operator only be applied to numeric value");
     }
 
     @Override
-    public int hashCode() {
-        return val.hashCode();
+    public Value reminder(Value right) {
+        throw new DataQueryError("'%' operator only be applied to numeric value");
+    }
+
+
+    @Override
+    public int compareTo(Value o) {
+        throw new DataQueryError("compare only accept numeric value");
     }
 }
