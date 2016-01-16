@@ -19,18 +19,23 @@
 package com.thoughtworks.studios.journey.models;
 
 import com.thoughtworks.studios.journey.ModelTestCase;
+import com.thoughtworks.studios.journey.jql.Stop;
+import com.thoughtworks.studios.journey.utils.CollectionUtils;
 import org.junit.Test;
 import org.neo4j.graphdb.Node;
+
+import java.util.List;
+import java.util.Map;
 
 import static com.thoughtworks.studios.journey.TestHelper.dateToMillis;
 import static org.junit.Assert.*;
 import static org.neo4j.helpers.collection.Iterables.iterable;
 
-public class StoppingConditionTest extends ModelTestCase {
+public class StopTest extends ModelTestCase {
 
     @Test
     public void testStopWithAnAction() {
-        StoppingCondition.StopMatchResult match = matchResult(iterable("a0", "a1", "a2", "a3"), "a2");
+        Stop.MatchResult match = matchResult(iterable("a0", "a1", "a2", "a3"), stop("a2"));
         assertTrue(match.matched());
         assertEquals("a2", events.getActionLabel(match.last()));
         assertEquals("a3", events.getActionLabel(match.iterator().next()));
@@ -38,7 +43,7 @@ public class StoppingConditionTest extends ModelTestCase {
 
     @Test
     public void testNoMatchingWhenActionNotFound() {
-        StoppingCondition.StopMatchResult failedMatch = matchResult(iterable("a2", "a3"), "a0");
+        Stop.MatchResult failedMatch = matchResult(iterable("a2", "a3"), stop("a0"));
         assertFalse(failedMatch.matched());
         assertNull(failedMatch.last());
     }
@@ -46,7 +51,7 @@ public class StoppingConditionTest extends ModelTestCase {
     @Test
     public void testNoMatchingWhenActionExistFromOtherJourney() {
         setupJourney(iterable("a0"), 0L);
-        StoppingCondition.StopMatchResult failedMatch = matchResult(iterable("a2", "a3"), "a0");
+        Stop.MatchResult failedMatch = matchResult(iterable("a2", "a3"), stop("a0"));
         assertFalse(failedMatch.matched());
         assertNull(failedMatch.last());
     }
@@ -54,35 +59,27 @@ public class StoppingConditionTest extends ModelTestCase {
 
     @Test
     public void testStopWithAnyAction() {
-        StoppingCondition.StopMatchResult match = matchResult(iterable("a0", "a1", "a2", "a3"), "*");
+        Stop.MatchResult match = matchResult(iterable("a0", "a1", "a2", "a3"), stop("*"));
         assertTrue(match.matched());
         assertEquals("a0", events.getActionLabel(match.last()));
         assertEquals("a1", events.getActionLabel(match.iterator().next()));
     }
 
-    @Test
-    public void testStopWithQualifier() {
-        StoppingCondition.StopMatchResult match = matchResult(iterable("a0", "a1", "a2"), "*:2");
-        assertTrue(match.matched());
-        assertEquals("a1", events.getActionLabel(match.last()));
-        assertEquals("a2", events.getActionLabel(match.iterator().next()));
-
-        assertTrue(matchResult(iterable("a0", "a1"), "*:2").matched());
-        assertFalse(matchResult(iterable("a0"), "*:2").matched());
-    }
 
     @Test
-    public void testStopWithQualifierAndRewind() {
-        StoppingCondition.StopMatchResult match = matchResult(iterable("a0", "a1", "a2"), "*:2:<<");
+    public void testStopWithRewind() {
+        Stop.MatchResult match = matchResult(iterable("a0", "a1", "a2"), stop("*", CollectionUtils.<String>list(), true));
         assertTrue(match.matched());
-        assertEquals("a1", events.getActionLabel(match.last()));
+        assertEquals("a0", events.getActionLabel(match.last()));
         assertEquals("a0", events.getActionLabel(match.iterator().next()));
     }
 
-
-    private StoppingCondition.StopMatchResult matchResult(Iterable<Object> actions, String stoppingExpression) {
+    private Stop.MatchResult matchResult(Iterable<Object> actions, Map<String, Object> stopAttr) {
         Node journey = setupJourney(actions, dateToMillis(2014, 7, 7, 10));
-        StoppingCondition stop = StoppingCondition.eval(app, stoppingExpression);
+        String action = (String) stopAttr.get("action");
+        List<String> conditions = (List<String>) stopAttr.get("conditions");
+        boolean rewind = stopAttr.containsKey("rewind") && (Boolean) stopAttr.get("rewind");
+        Stop stop = new Stop(app, action, conditions, rewind);
         return stop.match(journeys.events(journey));
     }
 

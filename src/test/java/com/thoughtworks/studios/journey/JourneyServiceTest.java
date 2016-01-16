@@ -403,7 +403,7 @@ public class JourneyServiceTest {
 
         assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
 
-        Response response = service.query("parsley", "event.timestamp |> time_floor:day |> to_date |> group_count", "[]", "[\"a1\"]", false);
+        Response response = service.query("parsley", "event.timestamp |> time_floor:day |> to_date |> group_count", "[{\"action\": \"a1\"}]", false);
         assertEquals(200, response.getStatus());
         assertEquals(list(list(list("2014-12-12T00:00:00.000Z", 2))), extractDataFromQueryResult((String) response.getEntity()));
     }
@@ -455,7 +455,7 @@ public class JourneyServiceTest {
                 createEventAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
         ));
         assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
-        Response response = service.query("parsley", "user |> distinct |> count", "[]", "[\"a\", \"d\"]", true);
+        Response response = service.query("parsley", "user |> distinct |> count", "[{ \"action\": \"a\"}, { \"action\": \"d\"}]", true);
         assertEquals(200, response.getStatus());
         assertEquals(list(list(list(1)), list(list(1))), extractDataFromQueryResult((String) response.getEntity()));
     }
@@ -481,7 +481,7 @@ public class JourneyServiceTest {
                 createEventAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
         ));
         assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
-        Response response = service.query("parsley", "event.color |> group_count", "[]", "[\"e\"]", true);
+        Response response = service.query("parsley", "event.color |> group_count", "[{\"action\":\"e\"}]", true);
         assertEquals(200, response.getStatus());
         assertEquals(list(list(list("red", 1),
                 list("green", 1))), extractDataFromQueryResult((String) response.getEntity()));
@@ -508,7 +508,7 @@ public class JourneyServiceTest {
                 createEventAttributes("s2", "c", dateToMillis(2011, 12, 13, 5), "u2")
         ));
         assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
-        Response response = service.query("parsley", "user", "[]", "[\"e\"]", true);
+        Response response = service.query("parsley", "user", "[{\"action\":\"e\"}]", true);
         assertEquals(200, response.getStatus());
         assertEquals(list(list(list(mapOf("uid", "u1", "traits", mapOf(), "anonymous_id", null)),
                 list(mapOf("uid", "u2", "traits", mapOf(), "anonymous_id", null)))), extractDataFromQueryResult((String) response.getEntity()));
@@ -521,7 +521,7 @@ public class JourneyServiceTest {
                 createEventAttributes("s0", "a", dateToMillis(2011, 12, 11, 11), "u1")
         ));
         assertEquals(201, service.addEvents("parsley", eventJson).getStatus());
-        Response response = service.query("parsley", "event.timestamp |> to_date", "[]", "[\"*\"]", true);
+        Response response = service.query("parsley", "event.timestamp |> to_date", "[{\"action\":\"*\"}]", true);
         assertEquals(200, response.getStatus());
         assertEquals(list(list(list("2011-12-11T11:00:00.000Z"))), extractDataFromQueryResult((String) response.getEntity()));
     }

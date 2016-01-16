@@ -19,6 +19,7 @@
 package com.thoughtworks.studios.journey;
 
 import com.thoughtworks.studios.journey.cspmining.TreeNode;
+import com.thoughtworks.studios.journey.jql.Stop;
 import com.thoughtworks.studios.journey.models.*;
 import org.junit.After;
 import org.junit.Before;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.thoughtworks.studios.journey.TestHelper.assertIterableEquals;
+import static com.thoughtworks.studios.journey.utils.CollectionUtils.list;
 import static com.thoughtworks.studios.journey.utils.MapUtils.mapOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -130,4 +132,19 @@ public class ModelTestCase {
     protected Node action(String actionLabel) {
         return actions.findByActionLabel(actionLabel);
     }
+
+
+    protected Map<String, Object> stop(String action, List<String> conditions) {
+        return mapOf("action", action, "conditions", conditions);
+    }
+
+    protected Map<String, Object> stop(String action) {
+        return mapOf("action", action, "conditions", list());
+    }
+
+
+    protected Map<String, Object> stop(String action, List<String> conditions, boolean rewind) {
+        return mapOf("action", action, "conditions", conditions, "rewind", rewind);
+    }
+
 }

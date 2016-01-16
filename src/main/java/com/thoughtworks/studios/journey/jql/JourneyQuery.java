@@ -83,6 +83,9 @@ public class JourneyQuery {
         }
 
         public Builder conditions(List<String> conditions) {
+            if(conditions == null) {
+                return this;
+            }
             for (String condition : conditions) {
                 this.conditions.add(JourneyCondition.parse(condition));
             }

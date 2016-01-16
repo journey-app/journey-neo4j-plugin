@@ -24,6 +24,7 @@ import com.thoughtworks.studios.journey.importexport.Reporter;
 import com.thoughtworks.studios.journey.jql.DataQuery;
 import com.thoughtworks.studios.journey.jql.DataQueryResult;
 import com.thoughtworks.studios.journey.jql.JourneyQuery;
+import com.thoughtworks.studios.journey.jql.Stop;
 import com.thoughtworks.studios.journey.models.*;
 import com.thoughtworks.studios.journey.utils.BatchTransaction;
 import com.thoughtworks.studios.journey.utils.GraphDbUtils;
@@ -479,7 +480,6 @@ public class JourneyService {
      * API for general data queries.
      * @param ns: namespace under operation.
      * @param select: select expression. Reference the data query document.
-     * @param whereJson: journey conditions.
      * @param stopsJson: stop expression. Reference the data query document.
      * @param cross: whether to connect journeys for same user.
      * @return json format array of array of array.
@@ -490,7 +490,6 @@ public class JourneyService {
     @Path("/{ns}/query")
     public Response query(@PathParam("ns") String ns,
                           @QueryParam("select") String select,
-                          @QueryParam("where") String whereJson,
                           @QueryParam("stops") String stopsJson,
                           @QueryParam("cross") @DefaultValue("true") boolean cross) throws IOException {
         Application app = new Application(graphDB, ns);
@@ -498,8 +497,7 @@ public class JourneyService {
             try {
                 DataQuery dataQuery = new DataQuery(app, cross);
                 dataQuery.select(select);
-                dataQuery.conditions(parseQueryCondition(whereJson));
-                dataQuery.stops(JSONUtils.jsonToListString(stopsJson));
+                dataQuery.addStops(JSONUtils.<Map<String, Object>>jsonToListOfT(stopsJson, Map.class));
                 return jsonOkResponse(dataQuery.execute());
             } catch (Exception e) {
                 logger.warn("Unexpected query error happened.", e);
@@ -521,8 +519,8 @@ public class JourneyService {
         List<String> baseConditions = parseQueryCondition(baseQueryJson);
 
         try (Transaction ignored = graphDB.beginTx()) {
-            StoppingCondition baseStop = StoppingCondition.eval(app, baseStopExpression);
-            StoppingCondition convertStop = StoppingCondition.eval(app, convertStopExpression);
+            Stop baseStop = new Stop(app, baseStopExpression, baseConditions, true);
+            Stop convertStop = new Stop(app, convertStopExpression, Collections.<String>emptyList());
 
             JourneyQuery query = JourneyQuery.Builder.query(app).
                     conditions(baseConditions).
@@ -540,12 +538,12 @@ public class JourneyService {
                 Object userGroup = userGroups.iterator().next();
                 Iterator<Node> iterator = app.journeys().eventsCrossJourney(journey);
 
-                StoppingCondition.StopMatchResult baseMatch = baseStop.match(iterator);
+                Stop.MatchResult baseMatch = baseStop.match(iterator);
                 if (!baseMatch.matched()) {
                     continue;
                 }
 
-                StoppingCondition.StopMatchResult convertMatch = convertStop.match(baseMatch.iterator());
+                Stop.MatchResult convertMatch = convertStop.match(baseMatch.iterator());
                 data.add(new Object[]{userGroup, convertMatch.matched() ? 1 : 0});
             }
 

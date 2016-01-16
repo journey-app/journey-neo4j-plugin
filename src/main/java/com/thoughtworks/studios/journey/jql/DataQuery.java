@@ -18,9 +18,8 @@
  */
 package com.thoughtworks.studios.journey.jql;
 
-import com.thoughtworks.studios.journey.models.Application;
-import com.thoughtworks.studios.journey.models.StoppingCondition;
 import com.thoughtworks.studios.journey.jql.transforms.ColumnTransformFn;
+import com.thoughtworks.studios.journey.models.Application;
 import org.neo4j.graphdb.Node;
 
 import java.util.*;
@@ -28,15 +27,14 @@ import java.util.*;
 public class DataQuery {
     private final Application app;
     private boolean crossJourney;
-    private List<String> conditions = new ArrayList<>();
-    private List<StoppingCondition> stops;
+    private List<Stop> stops;
     private Select select;
 
     public DataQuery(Application app, boolean crossJourney) {
         this.app = app;
         this.crossJourney = crossJourney;
         this.select = Select.parse(app, "event");
-        this.stops = Collections.singletonList(StoppingCondition.eval(app, "*"));
+        this.stops = new ArrayList<>();
     }
 
     public DataQuery(Application app) {
@@ -44,12 +42,12 @@ public class DataQuery {
     }
 
     public DataQueryResult execute() {
+        List<Stop> stops = stopsWithDefault();
         DataQueryResult result = new DataQueryResult(stops.size());
 
         try {
-            JourneyQuery journeyQuery = JourneyQuery.Builder.query(app).
-                    conditions(conditions).
-                    build();
+
+            JourneyQuery journeyQuery = stops.get(0).journeyQuery();
 
             Iterable<Node> journeys = crossJourney ? journeyQuery.uniqueJourneys() : journeyQuery.journeys();
             List<Select.CollectorBranch> branches = select.getBranches();
@@ -63,14 +61,14 @@ public class DataQuery {
 
                 boolean matchedAny = false;
                 for (int i = 0; i < stops.size(); i++) {
-                    StoppingCondition.StopMatchResult match = stops.get(i).match(iterator);
+                    Stop.MatchResult match = stops.get(i).match(iterator);
                     if (match.matched()) {
                         select.fillTuple(row[i], journey, match.last(), crossJourney);
                         iterator = match.iterator();
                         matchedAny = true;
                     } else {
-                        for(int j = i; j < stops.size(); j++) {
-                           select.fillTuple(row[j], journey, null, crossJourney);
+                        for (int j = i; j < stops.size(); j++) {
+                            select.fillTuple(row[j], journey, null, crossJourney);
                         }
                         break;
                     }
@@ -89,24 +87,31 @@ public class DataQuery {
         }
     }
 
+    private List<Stop> stopsWithDefault() {
+        return stops.isEmpty() ? defaultStops() : stops;
+    }
+
+    private List<Stop> defaultStops() {
+        return Collections.singletonList(new Stop(app, "*", Collections.<String>emptyList()));
+    }
+
 
     public void select(String selectStatement) {
         this.select = Select.parse(app, selectStatement);
     }
 
-    public void stops(List<String> stoppingExpressions) {
-        if(stoppingExpressions.isEmpty()) {
-            return;
+    public DataQuery addStops(List<Map<String, Object>> stops) {
+        for (Map<String, Object> stop : stops) {
+            addStop(stop);
         }
-
-        stops = new ArrayList<>(stoppingExpressions.size());
-        for (String stoppingExpression : stoppingExpressions) {
-            stops.add(StoppingCondition.eval(app, stoppingExpression));
-        }
+        return this;
     }
 
-    public void conditions(List<String> conditions) {
-        this.conditions = conditions;
+    public DataQuery addStop(Map<String, Object> stop) {
+        String action = (String) stop.get("action");
+        @SuppressWarnings("unchecked") List<String> conditions = (List<String>) stop.get("conditions");
+        this.stops.add(new Stop(app, action, conditions));
+        return this;
     }
 
     public void crossJourney(boolean val) {

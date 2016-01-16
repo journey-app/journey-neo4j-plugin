@@ -42,6 +42,10 @@ public class JSONUtils {
         return MAPPER.readValue(json, TypeFactory.defaultInstance().constructCollectionType(List.class, Map.class));
     }
 
+    public static <T> List<T> jsonToListOfT(String json, Class<Map> claz) throws IOException {
+        return MAPPER.readValue(json, TypeFactory.defaultInstance().constructCollectionType(List.class, claz));
+    }
+
     public static Map<String, Object> jsonToMap(String json) throws IOException {
         return MAPPER.readValue(json, TypeFactory.defaultInstance().constructMapType(java.util.HashMap.class, String.class, Object.class));
     }
