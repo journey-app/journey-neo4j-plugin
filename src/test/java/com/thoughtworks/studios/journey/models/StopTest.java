@@ -24,7 +24,6 @@ import com.thoughtworks.studios.journey.utils.CollectionUtils;
 import org.junit.Test;
 import org.neo4j.graphdb.Node;
 
-import java.util.List;
 import java.util.Map;
 
 import static com.thoughtworks.studios.journey.TestHelper.dateToMillis;
@@ -65,7 +64,6 @@ public class StopTest extends ModelTestCase {
         assertEquals("a1", events.getActionLabel(match.iterator().next()));
     }
 
-
     @Test
     public void testStopWithRewind() {
         Stop.MatchResult match = matchResult(iterable("a0", "a1", "a2"), stop("*", CollectionUtils.<String>list(), true));
@@ -76,11 +74,7 @@ public class StopTest extends ModelTestCase {
 
     private Stop.MatchResult matchResult(Iterable<Object> actions, Map<String, Object> stopAttr) {
         Node journey = setupJourney(actions, dateToMillis(2014, 7, 7, 10));
-        String action = (String) stopAttr.get("action");
-        List<String> conditions = (List<String>) stopAttr.get("conditions");
-        boolean rewind = stopAttr.containsKey("rewind") && (Boolean) stopAttr.get("rewind");
-        Stop stop = new Stop(app, action, conditions, rewind);
-        return stop.match(journeys.eventIterator(journey, true));
+        return Stop.build(app, stopAttr).match(journeys.eventIterator(journey, true));
     }
 
 }

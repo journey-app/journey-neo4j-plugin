@@ -510,21 +510,17 @@ public class JourneyService {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{ns}/experiment_data")
     public Response experimentData(@PathParam("ns") String ns,
-                                   @QueryParam("base_query") String baseQueryJson,
                                    @QueryParam("trait_name") String groupTraitName,
                                    @QueryParam("base_stop") String baseStopExpression,
                                    @QueryParam("convert_stop") String convertStopExpression) throws IOException {
 
         Application app = new Application(graphDB, ns);
-        List<String> baseConditions = parseQueryCondition(baseQueryJson);
 
         try (Transaction ignored = graphDB.beginTx()) {
-            Stop baseStop = new Stop(app, baseStopExpression, baseConditions, true);
-            Stop convertStop = new Stop(app, convertStopExpression, Collections.<String>emptyList());
+            Stop baseStop = Stop.build(app, JSONUtils.jsonToMap(baseStopExpression));
+            Stop convertStop = Stop.build(app, JSONUtils.jsonToMap(convertStopExpression));
 
-            JourneyQuery query = JourneyQuery.Builder.query(app).
-                    conditions(baseConditions).
-                    build();
+            JourneyQuery query = baseStop.journeyQuery();
 
             List<Object[]> data = new ArrayList<>();
 
@@ -667,31 +663,6 @@ public class JourneyService {
         }
     }
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{ns}/action_correlation")
-    public Response actionCorrelation(@PathParam("ns") String ns,
-                                      @QueryParam("lq") String leftQueryJson,
-                                      @QueryParam("rq") String rightQueryJson,
-                                      @QueryParam("raw") @DefaultValue("false") boolean raw) throws IOException {
-        Application app = new Application(graphDB, ns);
-        try (Transaction ignored = graphDB.beginTx()) {
-            JourneyQuery leftQuery = JourneyQuery.Builder.query(app).
-                    conditions(parseQueryCondition(leftQueryJson)).
-                    build();
-
-            JourneyQuery rightQuery = JourneyQuery.Builder.query(app).
-                    conditions(parseQueryCondition(rightQueryJson)).
-                    build();
-
-            ActionCorrelationCalculation calculation = new ActionCorrelationCalculation(app, leftQuery, rightQuery);
-            if (raw) {
-                return okResponse(calculation.rawDataCSV());
-            } else {
-                return jsonOkResponse(calculation.calculate());
-            }
-        }
-    }
 
     private List<String> parseQueryCondition(String conditionJSON) throws IOException {
         return conditionJSON.length() == 0 ? new ArrayList<String>() : jsonToListString(conditionJSON);

@@ -64,6 +64,10 @@ public class CrossJourneyEventIteratorTest extends ModelTestCase {
 
         iterator.forward();
         assertFalse(iterator.hasNext());
+
+        iterator.forward();
+        assertFalse(iterator.hasNext());
+
     }
 
     @Test
@@ -74,6 +78,7 @@ public class CrossJourneyEventIteratorTest extends ModelTestCase {
         iterator.next();
         iterator.next();
         iterator.rewind();
+
         assertEquals("a2", events.getActionLabel(iterator.next()));
     }
 

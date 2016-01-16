@@ -23,7 +23,10 @@ import com.thoughtworks.studios.journey.models.Application;
 import com.thoughtworks.studios.journey.models.EventIterator;
 import org.neo4j.graphdb.Node;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class DataQuery {
     private final Application app;
@@ -108,9 +111,7 @@ public class DataQuery {
     }
 
     public DataQuery addStop(Map<String, Object> stop) {
-        String action = (String) stop.get("action");
-        @SuppressWarnings("unchecked") List<String> conditions = (List<String>) stop.get("conditions");
-        this.stops.add(new Stop(app, action, conditions));
+        this.stops.add(Stop.build(app, stop));
         return this;
     }
 

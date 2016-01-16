@@ -24,6 +24,7 @@ import org.neo4j.graphdb.Node;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class Stop {
     private final Application app;
@@ -84,6 +85,13 @@ public class Stop {
 
     private boolean match(Node event) {
         return matchAny || app.events().action(event).equals(action);
+    }
+
+    public static Stop build(Application app, Map<String, Object> attrs) {
+        String action = (String) attrs.get("action");
+        @SuppressWarnings("unchecked") List<String> conditions = (List<String>) attrs.get("conditions");
+        boolean rewind = attrs.containsKey("rewind") && (Boolean) attrs.get("rewind");
+        return new Stop(app, action, conditions, rewind);
     }
 
     public class MatchResult {

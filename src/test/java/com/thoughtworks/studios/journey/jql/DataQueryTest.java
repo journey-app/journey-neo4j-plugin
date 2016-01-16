@@ -376,6 +376,12 @@ public class DataQueryTest extends ModelTestCase {
                 .addStop(stop("a0", list("actions includes 'a1'")));
         assertEquals(list(list(t(v(1))), list(t(v(1)))), query.execute().data());
 
+
+        query.clearStops()
+                .addStop(stop("a0", list("actions includes 'a0'")))
+                .addStop(stop("a2", list("actions includes 'a2'")));
+        assertEquals(list(list(t(v(3))), list(t(v(0)))), query.execute().data());
+
         query.clearStops()
                 .addStop(stop("*", list("user.identifier = 'u1'"), true))
                 .addStop(stop("a0", list("actions includes 'a2'")));

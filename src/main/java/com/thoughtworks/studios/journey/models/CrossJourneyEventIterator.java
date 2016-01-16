@@ -27,6 +27,10 @@ public class CrossJourneyEventIterator extends BaseEventIterator {
     }
 
     public void forward() {
+        if (currentJourney == null) {
+            currentEvent = null;
+            return;
+        }
         currentJourney = app.journeys().next(currentJourney);
         if (currentJourney == null) {
             currentEvent = null;
