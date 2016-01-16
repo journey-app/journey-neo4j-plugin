@@ -19,7 +19,7 @@
 package com.thoughtworks.studios.journey.jql;
 
 import com.thoughtworks.studios.journey.models.Application;
-import com.thoughtworks.studios.journey.utils.IterableUtils;
+import com.thoughtworks.studios.journey.models.EventIterator;
 import org.neo4j.graphdb.Node;
 
 import java.util.Iterator;
@@ -54,24 +54,26 @@ public class Stop {
         return query;
     }
 
-    public MatchResult match(Iterable<Node> iterable) {
-        return match(iterable.iterator());
-    }
 
-    public MatchResult match(Iterator<Node> eventIterator) {
-        IterableUtils.RewindableIterator<Node> iterator = IterableUtils.rewindable(eventIterator);
+    public MatchResult match(EventIterator iterator) {
         boolean matched = false;
+        Node matchedEvent = null;
+
+        iterator.markRewindPoint();
         while (iterator.hasNext()) {
             Node event = iterator.next();
             if (match(event)) {
+                matchedEvent = event;
                 matched = true;
                 break;
             }
         }
 
-        return new MatchResult(matched,
-                matched ? iterator.lastVisited() : null,
-                rewind ? iterator.rewind() : iterator.original());
+        if (rewind) {
+            iterator.rewind();
+        }
+
+        return new MatchResult(matched, matchedEvent, iterator);
     }
 
     private boolean match(Node event) {

@@ -323,6 +323,11 @@ public class Journeys implements Models {
         }, journeys.iterator());
     }
 
+    public EventIterator eventIterator(Node journey, boolean cross) {
+        return cross ? new CrossJourneyEventIterator(app, firstEvent(journey))
+                : new SingleJourneyEventIterator(app, firstEvent(journey));
+    }
+
     public Set<String> actions(Node journey) {
         Iterable<Node> actions = GraphDbUtils.getEndNodes(journey, RelTypes.JOURNEY_ACTIONS);
         HashSet<String> labels = new HashSet<>();
@@ -343,5 +348,9 @@ public class Journeys implements Models {
 
     public Integer length(Node journey) {
         return journey.hasProperty(PROP_LENGTH) ? (Integer) journey.getProperty(PROP_LENGTH) : 0;
+    }
+
+    public Node firstEvent(Node journey) {
+        return this.chainHelper.first(journey);
     }
 }

@@ -20,6 +20,7 @@ package com.thoughtworks.studios.journey.jql;
 
 import com.thoughtworks.studios.journey.jql.transforms.ColumnTransformFn;
 import com.thoughtworks.studios.journey.models.Application;
+import com.thoughtworks.studios.journey.models.EventIterator;
 import org.neo4j.graphdb.Node;
 
 import java.util.*;
@@ -52,7 +53,7 @@ public class DataQuery {
             Iterable<Node> journeys = crossJourney ? journeyQuery.uniqueJourneys() : journeyQuery.journeys();
             List<Select.CollectorBranch> branches = select.getBranches();
             for (Node journey : journeys) {
-                Iterator<Node> iterator = crossJourney ? app.journeys().eventsCrossJourney(journey) : app.journeys().events(journey).iterator();
+                EventIterator iterator = app.journeys().eventIterator(journey, crossJourney);
                 Tuple[] row = new Tuple[stops.size()];
 
                 for (int i = 0; i < row.length; i++) {
@@ -64,7 +65,6 @@ public class DataQuery {
                     Stop.MatchResult match = stops.get(i).match(iterator);
                     if (match.matched()) {
                         select.fillTuple(row[i], journey, match.last(), crossJourney);
-                        iterator = match.iterator();
                         matchedAny = true;
                     } else {
                         for (int j = i; j < stops.size(); j++) {
@@ -111,6 +111,11 @@ public class DataQuery {
         String action = (String) stop.get("action");
         @SuppressWarnings("unchecked") List<String> conditions = (List<String>) stop.get("conditions");
         this.stops.add(new Stop(app, action, conditions));
+        return this;
+    }
+
+    public DataQuery clearStops() {
+        this.stops = new ArrayList<>();
         return this;
     }
 

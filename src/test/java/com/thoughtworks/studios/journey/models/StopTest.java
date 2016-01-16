@@ -80,7 +80,7 @@ public class StopTest extends ModelTestCase {
         List<String> conditions = (List<String>) stopAttr.get("conditions");
         boolean rewind = stopAttr.containsKey("rewind") && (Boolean) stopAttr.get("rewind");
         Stop stop = new Stop(app, action, conditions, rewind);
-        return stop.match(journeys.events(journey));
+        return stop.match(journeys.eventIterator(journey, true));
     }
 
 }

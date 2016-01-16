@@ -536,14 +536,14 @@ public class JourneyService {
                 }
 
                 Object userGroup = userGroups.iterator().next();
-                Iterator<Node> iterator = app.journeys().eventsCrossJourney(journey);
+                EventIterator iterator = app.journeys().eventIterator(journey, true);
 
                 Stop.MatchResult baseMatch = baseStop.match(iterator);
                 if (!baseMatch.matched()) {
                     continue;
                 }
 
-                Stop.MatchResult convertMatch = convertStop.match(baseMatch.iterator());
+                Stop.MatchResult convertMatch = convertStop.match(iterator);
                 data.add(new Object[]{userGroup, convertMatch.matched() ? 1 : 0});
             }
 

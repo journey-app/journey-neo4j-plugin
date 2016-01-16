@@ -28,11 +28,9 @@ import org.neo4j.helpers.collection.Iterables;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static com.thoughtworks.studios.journey.TestHelper.*;
 import static com.thoughtworks.studios.journey.utils.CollectionUtils.list;
-import static com.thoughtworks.studios.journey.utils.MapUtils.mapOf;
 import static org.junit.Assert.assertEquals;
 import static org.neo4j.helpers.collection.Iterables.iterable;
 
@@ -363,5 +361,21 @@ public class DataQueryTest extends ModelTestCase {
         DataQuery query = new DataQuery(app, true);
         query.select("(user.identifier, journey) |> compact_by:0 |> take:0");
         assertEquals(list(list(t(v("u0")), t(v("u1")))), query.execute().data());
+    }
+
+    @Test
+    public void testMultipleStopConditions() throws IOException {
+        DataQuery query = new DataQuery(app, true);
+        query.select("event |> count");
+        query.addStop(stop("*", list("user.identifier = 'u1'"), true))
+                .addStop(stop("a0", list("actions includes 'a1'")));
+        assertEquals(list(list(t(v(1))), list(t(v(1)))), query.execute().data());
+
+        query.clearStops()
+                .addStop(stop("*", list("user.identifier = 'u1'"), true))
+                .addStop(stop("a0", list("actions includes 'a2'")));
+
+        assertEquals(list(list(t(v(1))), list(t(v(0)))), query.execute().data());
+
     }
 }
