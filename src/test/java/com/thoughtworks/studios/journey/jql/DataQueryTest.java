@@ -276,6 +276,27 @@ public class DataQueryTest extends ModelTestCase {
     }
 
     @Test
+    public void testQueryFirstEventURL() throws IOException {
+        DataQuery query = new DataQuery(app);
+        query.select("user.first_event.url");
+        query.addStop(stop("a1"));
+        assertEquals(list(list(t(v("/url/a0")), t(v("/url/a1")))), query.execute().data());
+    }
+
+    @Test
+    public void testQueryFirstEventReferrer() throws IOException {
+        Node r12 = Iterables.toList(journeys.events(j1)).get(0);
+        r12.setProperty("referrer", "https://www.google.com/url/a1?foo=bar");
+        Node r21 = Iterables.toList(journeys.events(j2)).get(0);
+        r21.setProperty("referrer", "https://www.facebook.com/url/a1?foo=baz");
+        DataQuery query = new DataQuery(app);
+        query.select("user.first_event.referrer |> url_domain");
+        query.addStop(stop("a1"));
+        assertEquals(list(list(t(v("www.google.com")), t(v("www.facebook.com")))), query.execute().data());
+    }
+
+
+    @Test
     public void testSelectReferrerDomain() throws IOException {
         Node r12 = Iterables.toList(journeys.events(j1)).get(1);
         r12.setProperty("referrer", "https://www.google.com/url/a1?foo=bar");

@@ -19,16 +19,17 @@
 package com.thoughtworks.studios.journey.models;
 
 import com.thoughtworks.studios.journey.utils.GraphDbUtils;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static com.thoughtworks.studios.journey.utils.GraphDbUtils.*;
+import static com.thoughtworks.studios.journey.utils.GraphDbUtils.propertyValueOrNull;
 import static com.thoughtworks.studios.journey.utils.IterableUtils.toIterable;
-import static org.neo4j.helpers.collection.Iterables.concat;
-import static org.neo4j.helpers.collection.Iterables.map;
 
 public class Users implements Models {
     private static final String PROP_IDENTIFIER = "identifier";
@@ -183,4 +184,8 @@ public class Users implements Models {
     }
 
 
+    public Node firstEvent(Node user) {
+        Node journey = this.journeysChainHelper.first(user);
+        return app.journeys().firstEvent(journey);
+    }
 }

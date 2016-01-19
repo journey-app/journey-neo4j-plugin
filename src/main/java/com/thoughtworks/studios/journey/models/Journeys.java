@@ -353,4 +353,6 @@ public class Journeys implements Models {
     public Node firstEvent(Node journey) {
         return this.chainHelper.first(journey);
     }
+
+
 }
