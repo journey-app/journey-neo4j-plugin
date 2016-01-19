@@ -74,12 +74,11 @@ public class CrossJourneyEventIteratorTest extends ModelTestCase {
     public void testRewindIterator() {
         EventIterator iterator = iterator(j2);
         iterator.next();
-        iterator.markRewindPoint();
         iterator.next();
         iterator.next();
         iterator.rewind();
 
-        assertEquals("a2", events.getActionLabel(iterator.next()));
+        assertEquals("a0", events.getActionLabel(iterator.next()));
     }
 
 }

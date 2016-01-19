@@ -42,11 +42,11 @@ public abstract class BaseEventIterator extends PrefetchingIterator<Node> implem
         try {
             return currentEvent;
         } finally {
+            rewindEvent = currentEvent;
+            rewindJourney = currentJourney;
             //noinspection ConstantConditions
             if (currentEvent != null) {
-
-                currentEvent = getSingleEndNode(currentEvent, RelTypes.NEXT);
-
+                currentEvent =  getSingleEndNode(currentEvent, RelTypes.NEXT);
                 if (currentEvent == null) {
                     this.forward();
                 }
@@ -60,9 +60,4 @@ public abstract class BaseEventIterator extends PrefetchingIterator<Node> implem
         currentJourney = rewindJourney;
     }
 
-    @Override
-    public void markRewindPoint() {
-        this.rewindEvent = currentEvent;
-        this.rewindJourney = currentJourney;
-    }
 }

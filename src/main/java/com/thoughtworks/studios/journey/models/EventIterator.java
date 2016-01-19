@@ -25,6 +25,4 @@ import java.util.Iterator;
 public interface EventIterator extends Iterator<Node> {
     void forward();
     void rewind();
-
-    void markRewindPoint();
 }

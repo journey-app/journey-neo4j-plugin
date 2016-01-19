@@ -60,7 +60,6 @@ public class Stop {
         boolean matched = false;
         Node matchedEvent = null;
 
-        iterator.markRewindPoint();
         while (iterator.hasNext()) {
             Node event = iterator.next();
             Node journey = app.events().journeyOf(event);
