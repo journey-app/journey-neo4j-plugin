@@ -43,7 +43,7 @@ public class JourneyQueryTest extends ModelTestCase {
 
     @Before
     public void setup() {
-        j1 = setupJourney(iterable("a0", "a1", "a1"), dateToMillis(2015, 1, 1), 100L, "u0", "s0");
+        j1 = setupJourney(iterable("a0", "a1", "a1", "a3"), dateToMillis(2015, 1, 1), 100L, "u0", "s0");
         j2 = setupJourney(iterable("a1", "a2"), dateToMillis(2015, 1, 2), 100L, "u1", "s1");
         j3 = setupJourney(iterable("a2", "a3", "a0"), dateToMillis(2015, 1, 3), 100L, null, "s2");
         j4 = setupJourney(iterable("a0", "a1"), dateToMillis(2015, 1, 4), 100L, "u1", "s1");
@@ -157,10 +157,18 @@ public class JourneyQueryTest extends ModelTestCase {
 
     @Test
     public void queryJourneyIncludeCertainAction() {
+        assertIterableEquals(list(j3), query("actions excludes 'a1'").journeys());
+        assertIterableEquals(list(j1, j4), query("actions excludes 'a2'").journeys());
+        assertIterableEquals(list(j1), query("actions includes 'a3'", "actions excludes 'a2'").journeys());
+    }
+
+    @Test
+    public void queryJourneyExcludeCertainAction() {
         assertIterableEquals(list(j1, j2, j4), query("actions includes 'a1'").journeys());
         assertIterableEquals(list(j2, j3), query("actions includes 'a2'").journeys());
         assertIterableEquals(list(j2), query("actions includes 'a1'", "actions includes 'a2'").journeys());
     }
+
 
     @Test(expected= DataQueryError.class)
     public void shouldRaiseExceptionWhenActionNotFound() {
@@ -173,13 +181,13 @@ public class JourneyQueryTest extends ModelTestCase {
         assertIterableEquals(list(j1, j2, j3, j4), query("length >= 1").journeys());
         assertIterableEquals(list(j1, j2, j3, j4), query("length >= 2").journeys());
         assertIterableEquals(list(j1, j3), query("length >= 3").journeys());
-        assertIterableEquals(list(), query("length >= 4").journeys());
+        assertIterableEquals(list(j1), query("length >= 4").journeys());
     }
 
     @Test
     public void queryWithReminderOperator() {
-        assertIterableEquals(list(j2, j4), query("length % 2 = 0").journeys());
-        assertIterableEquals(list(j1, j3), query("length % 2 == 1").journeys());
+        assertIterableEquals(list(j1, j2, j4), query("length % 2 = 0").journeys());
+        assertIterableEquals(list(j3), query("length % 2 == 1").journeys());
     }
 
     @Test

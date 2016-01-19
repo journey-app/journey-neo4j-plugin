@@ -265,6 +265,18 @@ enum RelationOperator {
 
             return ((SetValue) left).includes(((StringValue) right).asString());
         }
+    },
+
+    EXCLUDES {
+        @Override
+        public Query generateIndexQuery(IndexField indexField, Value value) {
+            return LuceneUtils.negate(INCLUDES.generateIndexQuery(indexField, value));
+        }
+
+        @Override
+        public boolean apply(Value left, Value right) {
+            return !INCLUDES.apply(left, right);
+        }
     };
 
     private static Map<String, RelationOperator> registry = new HashMap<>(10);
@@ -281,6 +293,7 @@ enum RelationOperator {
         registry.put("=~", MATCH);
         registry.put("!~", NOT_MATCH);
         registry.put("includes", INCLUDES);
+        registry.put("excludes", EXCLUDES);
     }
 
     public static RelationOperator forSymbol(String symbol) {

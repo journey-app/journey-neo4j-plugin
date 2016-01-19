@@ -5,7 +5,7 @@ condition
   ;
 
 rel_op
-  : '<' | '<=' | '>' | '>=' | '=~' | '!~' | '==' | '!=' | '<>' | '=' |K_INCLUDES
+  : '<' | '<=' | '>' | '>=' | '=~' | '!~' | '==' | '!=' | '<>' | '=' | K_INCLUDES | K_EXCLUDES
   ;
 
 expr
@@ -45,6 +45,7 @@ literal_value
 
 K_USER : U S E R;
 K_INCLUDES : I N C L U D E S;
+K_EXCLUDES : E X C L U D E S;
 
 IDENTIFIER
  : '`' (~'`' | '``')* '`'
