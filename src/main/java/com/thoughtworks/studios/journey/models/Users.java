@@ -179,7 +179,7 @@ public class Users implements Models {
         return hash;
     }
 
-    private String getAnonymousId(Node user) {
+    public String getAnonymousId(Node user) {
         return (String) propertyValueOrNull(user, PROP_ANONYMOUS_ID);
     }
 

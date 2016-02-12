@@ -88,6 +88,13 @@ public enum ModelAccessor {
         public Value get(Application app, Node journey) {
             return new SetValue(app.journeys().actions(journey));
         }
+    },
+    ANONYMOUS_ID {
+        @Override
+        public Value get(Application app, Node journey) {
+            Node user = app.journeys().user(journey);
+            return new StringValue(app.users().getAnonymousId(user));
+        }
     };
 
 
@@ -97,6 +104,7 @@ public enum ModelAccessor {
         registry.put("user.start_active_at", START_ACTIVE_AT);
         registry.put("user.last_active_at", LAST_ACTIVE_AT);
         registry.put("user.identifier", IDENTIFIER);
+        registry.put("user.anonymous_id", ANONYMOUS_ID);
         registry.put("first_action", FIRST_ACTION);
         registry.put("start_at", START_AT);
         registry.put("finish_at", FINISH_AT);
