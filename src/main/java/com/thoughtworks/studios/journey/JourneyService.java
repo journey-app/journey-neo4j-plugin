@@ -368,6 +368,40 @@ public class JourneyService {
         return lock;
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{ns}/user/{identifier}")
+    public Response user(@PathParam("ns") String ns, @PathParam("identifier") String identifier) throws IOException {
+        Application app = new Application(graphDB, ns);
+        try (Transaction ignored = graphDB.beginTx()) {
+            Node user = app.users().findByIdentifier(identifier);
+            Map<String, Object> map = app.users().toHash(user);
+            ArrayList<Map<String, Object>> journeys = new ArrayList<>();
+            for (Node journey : app.users().journeys(user)) {
+                journeys.add(app.journeys().toHash(journey));
+            }
+            map.put("journeys", journeys);
+            return jsonOkResponse(map);
+        }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{ns}/anonymous_user/{anonymous_id}")
+    public Response anonymousUser(@PathParam("ns") String ns, @PathParam("anonymous_id") String anonymousId) throws IOException {
+        Application app = new Application(graphDB, ns);
+        try (Transaction ignored = graphDB.beginTx()) {
+            Node user = app.users().findByAnonymousId(anonymousId);
+            Map<String, Object> map = app.users().toHash(user);
+            ArrayList<Map<String, Object>> journeys = new ArrayList<>();
+            for (Node journey : app.users().journeys(user)) {
+                journeys.add(app.journeys().toHash(journey));
+            }
+            map.put("journeys", journeys);
+            return jsonOkResponse(map);
+        }
+    }
+
     /**
      * API for query journeys
      * @param ns: namespace under operation
