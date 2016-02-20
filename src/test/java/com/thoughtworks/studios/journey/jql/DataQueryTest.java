@@ -410,4 +410,12 @@ public class DataQueryTest extends ModelTestCase {
         assertEquals(list(list(t(v(1))), list(t(v(0)))), query.execute().data());
 
     }
+
+    @Test
+    public void testQueryLandingAction() {
+        DataQuery query = new DataQuery(app, true);
+        query.select("user.first_event.action");
+        assertEquals(list(list(t(v("a0")), t(v("a1")), t(v("a2")))), query.execute().data());
+    }
+
 }

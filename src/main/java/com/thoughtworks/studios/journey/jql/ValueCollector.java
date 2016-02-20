@@ -54,6 +54,10 @@ public abstract class ValueCollector {
             return new UserFirstEventReferrerCollector(app);
         }
 
+        if (expression.equals("user.first_event.action")) {
+            return new UserFirstEventActionCollector(app);
+        }
+
         Matcher traitMatcher = TRAIT_PATTERN.matcher(expression);
         if (traitMatcher.matches()) {
             return new UserTraitCollector(app, traitMatcher.group(1));
@@ -313,5 +317,19 @@ public abstract class ValueCollector {
             Node user = app.journeys().user(journey);
             Node firstEvent = app.users().firstEvent(user);
             return Values.wrapSingle(app.events().getReferrer(firstEvent));        }
+    }
+
+    private static class UserFirstEventActionCollector extends ValueCollector {
+        private Application app;
+        public UserFirstEventActionCollector(Application app) {
+            this.app = app;
+        }
+
+        @Override
+        public JQLValue values(Node journey, Node event, boolean cross) {
+            Node user = app.journeys().user(journey);
+            Node firstEvent = app.users().firstEvent(user);
+            return Values.wrapSingle(app.events().getActionLabel(firstEvent));
+        }
     }
 }
