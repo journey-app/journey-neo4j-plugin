@@ -163,6 +163,7 @@ public class JourneysTest extends ModelTestCase {
         Node a2 = first(journeys.events(j3));
         assertIterableEquals(iterable(), map(app.events().getActionLabelFn(), journeys.suffixFor(a0)));
         assertIterableEquals(iterable("a3", "a0"), map(app.events().getActionLabelFn(), journeys.suffixFor(a2)));
+        assertIterableEquals(iterable("a3", "a0"), map(app.events().getActionLabelFn(), journeys.suffixFor(j3, "a2")));
 
         actions.ignore(actions.findByActionLabel("a0"));
         assertIterableEquals(iterable("a3"), map(app.events().getActionLabelFn(), journeys.suffixFor(a2)));

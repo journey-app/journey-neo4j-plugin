@@ -490,6 +490,27 @@ public class JourneyService {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{ns}/forward_journey_graph")
+    public Response forwardJourneyGraph(@PathParam("ns") String ns,
+                                          @QueryParam("query") String queryJson,
+                                          @QueryParam("label") String startActionLabel,
+                                          @QueryParam("steps") @DefaultValue("4") int steps) throws IOException {
+        Application app = new Application(graphDB, ns);
+        ActionsGraph graph = new ActionsGraph(app, steps);
+        try (Transaction ignored = graphDB.beginTx()) {
+            JourneyQuery query = JourneyQuery.Builder.query(app).
+                    conditions(parseQueryCondition(queryJson)).
+                    desc().
+                    build();
+            for (Node journey : query.uniqueJourneys()) {
+                graph.add(app.journeys().suffixFor(journey, startActionLabel));
+            }
+        }
+        return jsonOkResponse(graph);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/{ns}/backtrace_journey_graph")
     public Response backtraceJourneyGraph(@PathParam("ns") String ns,
                                           @QueryParam("query") String queryJson,

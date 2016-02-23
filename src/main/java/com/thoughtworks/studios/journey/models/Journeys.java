@@ -258,6 +258,10 @@ public class Journeys implements Models {
         return rejectIgnored(skip(1, chainHelper.nodesAfter(event)));
     }
 
+    public Iterable<Node> suffixFor(Node journey, String actionLabel) {
+        return suffixFor(firstEventForAction(journey, actionLabel));
+    }
+
     public Iterable<Node> findByIds(String[] ids) {
         ArrayList<Node> result = new ArrayList<>(ids.length);
         for (String id : ids) {
