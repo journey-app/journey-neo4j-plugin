@@ -503,7 +503,11 @@ public class JourneyService {
                     desc().
                     build();
             for (Node journey : query.uniqueJourneys()) {
-                graph.add(app.journeys().suffixFor(journey, startActionLabel));
+                if("*".equals(startActionLabel)) {
+                    graph.add(app.journeys().events(journey));
+                } else {
+                    graph.add(app.journeys().suffixFor(journey, startActionLabel));
+                }
             }
         }
         return jsonOkResponse(graph);
